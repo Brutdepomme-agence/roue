@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Juju va faire à François 🤠</title>
+  <title>Juju va faire à François</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
 
@@ -27,8 +27,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 16px 20px;
-      gap: 14px;
+      padding: 8px 20px;
+      gap: 8px;
     }
 
     /* ── Hearts canvas ── */
@@ -40,13 +40,12 @@
       z-index: 100;
     }
 
-    /* ── Cowboy hat ── */
-    .cowboy-hat {
-      font-size: 3rem;
-      filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.15));
+    /* ── Bratz cowgirl ── */
+    .bratz-girl {
+      width: 62px;
+      height: auto;
+      filter: drop-shadow(2px 5px 10px rgba(255,77,126,0.3));
       flex-shrink: 0;
-      line-height: 1;
-      user-select: none;
     }
 
     /* ── Title ── */
@@ -81,10 +80,10 @@
 
     .pointer {
       position: absolute;
-      top: -18px;
+      top: -14px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 1.6rem;
+      font-size: 1.2rem;
       z-index: 10;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
       line-height: 1;
@@ -196,12 +195,60 @@
 
   <canvas id="hearts"></canvas>
 
-  <div class="cowboy-hat">🤠</div>
+  <!-- Bratz-style cowgirl SVG -->
+  <svg class="bratz-girl" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+    <!-- Chapeau de cowboy -->
+    <ellipse cx="50" cy="38" rx="34" ry="7" fill="#8B4513"/>
+    <rect x="30" y="10" width="40" height="30" rx="8" fill="#A0522D"/>
+    <ellipse cx="50" cy="10" rx="20" ry="6" fill="#8B4513"/>
+    <!-- Ruban chapeau -->
+    <rect x="30" y="36" width="40" height="5" rx="2" fill="#FF6B9D"/>
+    <circle cx="50" cy="38" r="3" fill="#FFD700"/>
+    <!-- Visage — Bratz : grand, menton petit -->
+    <ellipse cx="50" cy="62" rx="22" ry="25" fill="#FDDBB4"/>
+    <!-- Cheveux -->
+    <ellipse cx="50" cy="50" rx="23" ry="14" fill="#3B1F00"/>
+    <path d="M28 55 Q22 80 26 95" stroke="#3B1F00" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M72 55 Q78 80 74 95" stroke="#3B1F00" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <!-- Sourcils -->
+    <path d="M35 52 Q40 49 44 51" stroke="#3B1F00" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M56 51 Q60 49 65 52" stroke="#3B1F00" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <!-- Grands yeux Bratz -->
+    <ellipse cx="40" cy="59" rx="9" ry="10" fill="white"/>
+    <ellipse cx="60" cy="59" rx="9" ry="10" fill="white"/>
+    <ellipse cx="40" cy="60" rx="6" ry="7" fill="#5C3317"/>
+    <ellipse cx="60" cy="60" rx="6" ry="7" fill="#5C3317"/>
+    <ellipse cx="40" cy="60" rx="3.5" ry="4" fill="#1a0a00"/>
+    <ellipse cx="60" cy="60" rx="3.5" ry="4" fill="#1a0a00"/>
+    <circle cx="42" cy="57" r="1.5" fill="white"/>
+    <circle cx="62" cy="57" r="1.5" fill="white"/>
+    <!-- Cils -->
+    <path d="M32 54 Q33 51 35 53" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
+    <path d="M35 52 Q36 49 38 52" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
+    <path d="M38 51 Q40 48 42 51" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
+    <path d="M46 51 Q48 48 50 51" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
+    <path d="M52 52 Q54 49 56 52" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
+    <path d="M56 52 Q58 49 60 52" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
+    <path d="M62 51 Q64 48 66 52" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
+    <path d="M66 53 Q68 50 70 54" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
+    <!-- Nez petit -->
+    <ellipse cx="50" cy="69" rx="2.5" ry="1.5" fill="#F0A070" opacity="0.6"/>
+    <!-- Lèvres pulpeuses Bratz -->
+    <path d="M40 76 Q45 73 50 74 Q55 73 60 76 Q55 82 50 82 Q45 82 40 76Z" fill="#FF4D7E"/>
+    <path d="M40 76 Q50 79 60 76" stroke="#FF2060" stroke-width="0.8" fill="none"/>
+    <path d="M44 74 Q50 72 56 74" fill="#FFB3C6"/>
+    <!-- Blush -->
+    <ellipse cx="32" cy="68" rx="5" ry="3" fill="#FFB3C6" opacity="0.5"/>
+    <ellipse cx="68" cy="68" rx="5" ry="3" fill="#FFB3C6" opacity="0.5"/>
+    <!-- Corps / épaules -->
+    <path d="M28 87 Q50 82 72 87 L75 115 Q50 120 25 115Z" fill="#FF6B9D"/>
+    <!-- Étoile sur la veste -->
+    <polygon points="50,92 52,97 57,97 53,100 55,105 50,102 45,105 47,100 43,97 48,97" fill="#FFD700" opacity="0.9"/>
+  </svg>
   <h1>Juju va faire à François</h1>
-  <p class="subtitle">Tourne la roue pour le savoir</p>
 
   <div class="wheel-container">
-    <div class="pointer">🤠</div>
+    <div class="pointer">🌟</div>
     <canvas id="wheel" width="300" height="300"></canvas>
     <button class="center-btn" id="spinBtn" onclick="spin()">💕</button>
   </div>
