@@ -7,152 +7,374 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0e0e1a;
-    --surface: #16162a;
-    --surface2: #1e1e38;
-    --border: #2e2e5a;
+    --bg: #0a0a14;
+    --surface: #13132200;
+    --surface-solid: #131322;
+    --surface2: #1c1c32;
+    --border: #2a2a50;
+    --border-bright: #4a4a80;
     --accent: #7c5cfc;
     --accent2: #a78bfa;
+    --accent3: #c4b5fd;
     --text: #e2e2f0;
-    --text-muted: #8888aa;
-    --c0: #7c5cfc; /* Gildas */
-    --c1: #38bdf8; /* Jules */
-    --c2: #4ade80; /* François */
-    --c3: #fb923c; /* Ben */
+    --text-muted: #7878a0;
+    --c0: #7c5cfc;
+    --c1: #38bdf8;
+    --c2: #4ade80;
+    --c3: #fb923c;
     --win: #4ade80;
     --loss: #f87171;
     --gold: #fbbf24;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(124,92,252,.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(56,189,248,.05) 0%, transparent 60%);
+  }
+
+  /* Crystal pattern background tiles */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L50 20 L50 40 L30 55 L10 40 L10 20 Z' fill='none' stroke='rgba(124,92,252,0.04)' stroke-width='1'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
 
   /* HEADER */
   header {
-    background: linear-gradient(135deg, #1a1040 0%, #0e0e1a 100%);
+    background: linear-gradient(160deg, #1a1040 0%, #0e0e1c 60%, #0a0a14 100%);
     border-bottom: 1px solid var(--border);
     padding: 1rem 2rem;
     display: flex; align-items: center; justify-content: space-between;
     position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 30px rgba(0,0,0,.5), 0 1px 0 rgba(124,92,252,.15);
   }
-  .logo { display: flex; align-items: center; gap: .7rem; }
-  .logo-icon { font-size: 1.8rem; }
-  .logo h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: .15em; color: var(--accent2); }
-  .logo span { font-size: .75rem; color: var(--text-muted); display: block; letter-spacing: .2em; text-transform: uppercase; }
+  header::after {
+    content: '';
+    position: absolute; bottom: -1px; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(167,139,250,.4), transparent);
+  }
+
+  .logo { display: flex; align-items: center; gap: .85rem; }
+  .logo-icon { flex-shrink: 0; }
+  .logo h1 {
+    font-size: 1.35rem; font-weight: 800; letter-spacing: .22em;
+    color: transparent;
+    background: linear-gradient(135deg, #c4b5fd, #a78bfa, #7c5cfc);
+    -webkit-background-clip: text; background-clip: text;
+  }
+  .logo span { font-size: .7rem; color: var(--text-muted); display: block; letter-spacing: .25em; text-transform: uppercase; margin-top: .1rem; }
+
   nav { display: flex; gap: .3rem; }
   nav button {
     background: transparent; border: 1px solid transparent; color: var(--text-muted);
-    padding: .5rem 1.1rem; border-radius: 8px; cursor: pointer; font-size: .85rem;
-    transition: all .2s;
+    padding: .5rem 1.1rem; border-radius: 8px; cursor: pointer; font-size: .84rem;
+    transition: all .2s; letter-spacing: .04em;
+    position: relative; overflow: hidden;
   }
-  nav button:hover { border-color: var(--border); color: var(--text); }
-  nav button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  nav button:hover { border-color: var(--border-bright); color: var(--accent3); }
+  nav button.active {
+    background: linear-gradient(135deg, rgba(124,92,252,.3), rgba(124,92,252,.15));
+    border-color: rgba(124,92,252,.6); color: var(--accent3);
+    box-shadow: 0 0 12px rgba(124,92,252,.25), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  nav button.active::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,.04) 0%, transparent 100%);
+  }
 
   /* LAYOUT */
-  main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+  main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
   .page { display: none; }
   .page.active { display: block; }
 
   /* SECTION TITLE */
-  .section-title { font-size: 1.1rem; font-weight: 600; color: var(--accent2); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 1.2rem; }
+  .section-title {
+    font-size: 1rem; font-weight: 700; color: var(--accent2);
+    text-transform: uppercase; letter-spacing: .18em; margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: .7rem;
+  }
+  .section-title::before { content: '◆'; font-size: .55rem; opacity: .6; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
 
   /* PLAYER CARDS */
   .player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
   .player-card {
-    background: var(--surface);
+    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 1.2rem;
     position: relative;
     overflow: hidden;
-    transition: transform .2s, border-color .2s;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
   }
-  .player-card:hover { transform: translateY(-2px); }
+  .player-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--border-bright);
+    box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 20px rgba(124,92,252,.08);
+  }
   .player-card::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--player-color), transparent);
+  }
+  .player-card::after {
+    content: '';
+    position: absolute; top: 3px; right: 1rem; width: 40px; height: 40px;
     background: var(--player-color);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    opacity: .06;
   }
   .player-card .player-name { font-size: 1.1rem; font-weight: 700; }
-  .player-card .player-avatar { font-size: .78rem; color: var(--text-muted); margin-bottom: .9rem; text-transform: uppercase; letter-spacing: .12em; }
-  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: .3rem 0; border-bottom: 1px solid var(--border); }
+  .player-card .player-avatar { font-size: .74rem; color: var(--text-muted); margin-bottom: .9rem; text-transform: uppercase; letter-spacing: .14em; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: .3rem 0; border-bottom: 1px solid rgba(42,42,80,.5); }
   .stat-row:last-child { border-bottom: none; }
   .stat-label { font-size: .8rem; color: var(--text-muted); }
   .stat-val { font-size: .92rem; font-weight: 600; }
-  .badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .7rem; font-weight: 700; padding: .18rem .5rem; border-radius: 6px; text-transform: uppercase; letter-spacing: .08em; }
-  .badge-mvp { background: rgba(251,191,36,.15); color: var(--gold); }
-  .badge-lvp { background: rgba(248,113,113,.15); color: var(--loss); }
-  .badge-win { background: rgba(74,222,128,.15); color: var(--win); }
+  .badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .68rem; font-weight: 700; padding: .18rem .5rem; border-radius: 6px; text-transform: uppercase; letter-spacing: .08em; }
+  .badge-mvp { background: rgba(251,191,36,.12); color: var(--gold); border: 1px solid rgba(251,191,36,.2); }
+  .badge-lvp { background: rgba(248,113,113,.12); color: var(--loss); border: 1px solid rgba(248,113,113,.2); }
+  .badge-win { background: rgba(74,222,128,.12); color: var(--win); border: 1px solid rgba(74,222,128,.2); }
   .badges-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .5rem; }
 
   /* CHARTS */
   .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
-  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.3rem; }
-  .chart-card h3 { font-size: .85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 1rem; }
+  .chart-card {
+    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
+    border: 1px solid var(--border); border-radius: 14px; padding: 1.3rem;
+    position: relative; overflow: hidden;
+  }
+  .chart-card::before {
+    content: '';
+    position: absolute; top: -20px; right: -20px; width: 80px; height: 80px;
+    background: rgba(124,92,252,.04);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  .chart-card h3 { font-size: .78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .14em; margin-bottom: 1rem; }
   .chart-wrap { position: relative; height: 220px; }
 
   /* HISTORY TABLE */
   .games-list { display: flex; flex-direction: column; gap: 1rem; }
-  .game-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .game-card {
+    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
+    border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  }
   .game-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: .8rem 1.2rem;
-    background: var(--surface2);
+    padding: .85rem 1.2rem;
+    background: rgba(28,28,50,.6);
     cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: background .2s;
   }
-  .game-header .game-date { font-size: .85rem; color: var(--text-muted); }
+  .game-header:hover { background: rgba(40,40,70,.6); }
+  .game-card.open .game-header { border-bottom-color: var(--border); }
+  .game-header .game-date { font-size: .82rem; color: var(--text-muted); }
   .game-header .game-title { font-weight: 600; }
-  .game-header .chevron { transition: transform .2s; font-size: .8rem; color: var(--text-muted); }
+  .game-header .chevron { transition: transform .25s; font-size: .7rem; color: var(--text-muted); }
   .game-card.open .chevron { transform: rotate(180deg); }
   .game-body { display: none; padding: 1rem 1.2rem; }
   .game-card.open .game-body { display: block; }
   .game-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
   .game-table th { text-align: left; padding: .4rem .6rem; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
-  .game-table td { padding: .4rem .6rem; border-bottom: 1px solid rgba(46,46,90,.4); }
+  .game-table td { padding: .4rem .6rem; border-bottom: 1px solid rgba(42,42,80,.3); }
   .game-table tr:last-child td { border-bottom: none; }
   .rank-1 { color: var(--gold); font-weight: 700; }
   .rank-2 { color: #c0c0c0; font-weight: 600; }
   .rank-3 { color: #cd7f32; }
   .delete-btn {
-    background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3);
+    background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.25);
     color: var(--loss); border-radius: 6px; padding: .25rem .6rem;
     font-size: .75rem; cursor: pointer; transition: all .2s;
   }
-  .delete-btn:hover { background: rgba(248,113,113,.25); }
+  .delete-btn:hover { background: rgba(248,113,113,.2); border-color: rgba(248,113,113,.5); }
 
-  /* NEW GAME FORM */
-  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; }
-  .form-section-title { font-size: .8rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 1rem; }
+  /* ===================== NEW GAME FORM ===================== */
+  .form-card {
+    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
+    border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .form-section-title {
+    font-size: .75rem; font-weight: 700; color: var(--accent2);
+    text-transform: uppercase; letter-spacing: .15em; margin-bottom: 1rem;
+  }
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
   .field { display: flex; flex-direction: column; gap: .35rem; }
-  .field label { font-size: .78rem; color: var(--text-muted); font-weight: 500; }
-  .field input, .field select {
+  .field label { font-size: .75rem; color: var(--text-muted); font-weight: 500; letter-spacing: .06em; }
+  .field input[type="text"],
+  .field input[type="date"],
+  .field select {
     background: var(--bg); border: 1px solid var(--border); color: var(--text);
     padding: .5rem .75rem; border-radius: 8px; font-size: .88rem;
-    transition: border-color .2s;
+    transition: border-color .2s, box-shadow .2s;
   }
-  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  .field input[type="text"]:focus,
+  .field input[type="date"]:focus,
+  .field select:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(124,92,252,.18);
+  }
   .field input[type="checkbox"] { width: auto; cursor: pointer; }
   .checkbox-field { flex-direction: row; align-items: center; gap: .5rem; cursor: pointer; }
   .checkbox-field label { cursor: pointer; font-size: .88rem; color: var(--text); }
-  .player-form-block {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 1rem; position: relative;
+
+  /* ---- STEPPER ---- */
+  .stepper {
+    display: flex; align-items: stretch; height: 42px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    transition: border-color .2s, box-shadow .2s;
+    position: relative;
   }
+  .stepper:focus-within,
+  .stepper:hover {
+    border-color: rgba(124,92,252,.6);
+    box-shadow: 0 0 0 2px rgba(124,92,252,.14);
+  }
+  .stepper-btn {
+    width: 42px; flex-shrink: 0;
+    background: var(--surface2);
+    border: none; border-radius: 0;
+    color: var(--accent2);
+    font-size: 1.25rem; font-weight: 300;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s;
+    user-select: none; -webkit-user-select: none;
+    touch-action: manipulation;
+    position: relative; overflow: hidden;
+  }
+  .stepper-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at center, rgba(167,139,250,.3) 0%, transparent 70%);
+    opacity: 0; transition: opacity .15s;
+  }
+  .stepper-btn:hover { background: rgba(124,92,252,.35); color: #fff; }
+  .stepper-btn:hover::after { opacity: 1; }
+  .stepper-btn:active { background: rgba(124,92,252,.55); transform: scale(.94); }
+  .stepper-btn.minus { border-right: 1px solid var(--border); }
+  .stepper-btn.plus  { border-left:  1px solid var(--border); }
+  .stepper-input {
+    flex: 1; min-width: 0;
+    background: transparent; border: none;
+    color: var(--text);
+    text-align: center;
+    font-size: .95rem; font-weight: 700; letter-spacing: .02em;
+    padding: 0;
+    -moz-appearance: textfield;
+    cursor: default;
+  }
+  .stepper-input::-webkit-inner-spin-button,
+  .stepper-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .stepper-input:focus { outline: none; }
+
+  /* Bigger stepper for PDC (main stat) */
+  .stepper.big { height: 50px; }
+  .stepper.big .stepper-btn { width: 50px; font-size: 1.4rem; }
+  .stepper.big .stepper-input { font-size: 1.15rem; }
+
+  /* ---- PLAYER FORM BLOCK ---- */
+  .player-form-block {
+    background: rgba(10,10,20,.5);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.1rem 1.1rem 1rem;
+    position: relative;
+    margin-bottom: .8rem;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .player-form-block:hover { border-color: var(--border-bright); }
   .player-form-block::before {
     content: '';
     position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
     background: var(--player-color); border-radius: 3px 0 0 3px;
   }
-  .player-form-title { font-weight: 700; margin-bottom: .8rem; font-size: .95rem; }
-  .form-actions { display: flex; gap: .8rem; margin-top: 1.5rem; }
-  .btn {
-    padding: .65rem 1.5rem; border-radius: 9px; font-size: .9rem; font-weight: 600;
-    cursor: pointer; transition: all .2s; border: none;
+  .player-form-block::after {
+    content: '';
+    position: absolute; top: 0; left: 3px; right: 0; height: 1px;
+    background: linear-gradient(90deg, var(--player-color), transparent 60%);
+    opacity: .5;
   }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #6b4de6; }
-  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent2); }
+  /* Crystal gem decoration */
+  .player-form-block .block-gem {
+    position: absolute; top: .9rem; right: .9rem;
+    width: 22px; height: 25px;
+    opacity: .18;
+  }
+
+  .player-form-title {
+    font-weight: 700; margin-bottom: .9rem; font-size: 1rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .player-form-title .avatar-tag {
+    font-weight: 400; font-size: .75rem; color: var(--text-muted);
+    background: rgba(255,255,255,.05); border: 1px solid var(--border);
+    border-radius: 4px; padding: .1rem .4rem; letter-spacing: .06em;
+  }
+
+  /* Checkboxes row */
+  .checks-col {
+    display: flex; flex-direction: column; gap: .6rem; justify-content: center;
+    padding-top: 1.2rem;
+  }
+  .check-pill {
+    display: flex; align-items: center; gap: .55rem; cursor: pointer;
+    padding: .38rem .65rem;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.02);
+    transition: border-color .2s, background .2s;
+    font-size: .84rem;
+    user-select: none;
+  }
+  .check-pill:hover { border-color: var(--border-bright); background: rgba(255,255,255,.05); }
+  .check-pill input[type="checkbox"] { display: none; }
+  .check-pill .pill-dot {
+    width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0;
+    border: 2px solid var(--border-bright);
+    background: transparent;
+    transition: background .15s, border-color .15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .check-pill input:checked + .pill-dot {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .check-pill input:checked + .pill-dot::after { content: '✓'; color: #fff; font-size: .65rem; font-weight: 800; }
+  .check-pill.checked { border-color: rgba(124,92,252,.4); background: rgba(124,92,252,.07); }
+
+  /* FORM ACTIONS */
+  .form-actions { display: flex; gap: .8rem; margin-top: 1.5rem; flex-wrap: wrap; }
+  .btn {
+    padding: .65rem 1.6rem; border-radius: 9px; font-size: .88rem; font-weight: 600;
+    cursor: pointer; transition: all .2s; border: none; letter-spacing: .04em;
+    position: relative; overflow: hidden;
+  }
+  .btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,.08) 0%, transparent 50%);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #7c5cfc, #6748d8);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(124,92,252,.3), 0 1px 0 rgba(255,255,255,.1) inset;
+  }
+  .btn-primary:hover { background: linear-gradient(135deg, #8a6efc, #7459e6); box-shadow: 0 6px 22px rgba(124,92,252,.45); }
+  .btn-secondary {
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .btn-secondary:hover { border-color: rgba(124,92,252,.5); color: var(--accent3); }
 
   /* PLAYERS MANAGEMENT */
   .players-list { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
@@ -171,10 +393,11 @@
   /* TOAST */
   .toast {
     position: fixed; bottom: 2rem; right: 2rem;
-    background: var(--accent); color: #fff;
+    background: linear-gradient(135deg, #7c5cfc, #6748d8);
+    color: #fff;
     padding: .75rem 1.3rem; border-radius: 10px;
     font-size: .88rem; font-weight: 600;
-    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    box-shadow: 0 4px 24px rgba(124,92,252,.5);
     transform: translateY(100px); opacity: 0;
     transition: all .3s; z-index: 999;
   }
@@ -182,13 +405,24 @@
 
   /* EMPTY STATE */
   .empty { text-align: center; padding: 3rem; color: var(--text-muted); }
-  .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .6; }
 
   /* SUMMARY STATS */
   .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .8rem; margin-bottom: 2rem; }
-  .summary-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
-  .summary-tile .s-val { font-size: 1.8rem; font-weight: 800; color: var(--accent2); }
-  .summary-tile .s-label { font-size: .75rem; color: var(--text-muted); margin-top: .3rem; text-transform: uppercase; letter-spacing: .08em; }
+  .summary-tile {
+    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
+    border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center;
+    position: relative; overflow: hidden;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .summary-tile:hover { border-color: var(--border-bright); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+  .summary-tile::before {
+    content: '◆';
+    position: absolute; bottom: .4rem; right: .6rem;
+    font-size: .5rem; color: var(--accent); opacity: .3;
+  }
+  .summary-tile .s-val { font-size: 1.9rem; font-weight: 800; color: var(--accent2); line-height: 1; }
+  .summary-tile .s-label { font-size: .7rem; color: var(--text-muted); margin-top: .4rem; text-transform: uppercase; letter-spacing: .1em; }
 
   @media (max-width: 600px) {
     header { padding: .8rem 1rem; flex-direction: column; gap: .6rem; }
@@ -201,7 +435,18 @@
 
 <header>
   <div class="logo">
-    <span class="logo-icon">💎</span>
+    <div class="logo-icon">
+      <!-- Crystal Shard SVG -->
+      <svg width="30" height="34" viewBox="0 0 30 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 1 L29 9.5 L29 24.5 L15 33 L1 24.5 L1 9.5 Z" stroke="rgba(167,139,250,0.6)" stroke-width="1.2"/>
+        <path d="M15 5 L25 11.5 L25 22.5 L15 29 L5 22.5 L5 11.5 Z" fill="rgba(124,92,252,0.2)" stroke="rgba(124,92,252,0.4)" stroke-width="1"/>
+        <path d="M15 10 L21 14 L21 20 L15 24 L9 20 L9 14 Z" fill="rgba(124,92,252,0.5)"/>
+        <path d="M15 13 L18 15.5 L15 21 L12 15.5 Z" fill="rgba(196,181,253,0.9)"/>
+        <path d="M15 1 L15 13" stroke="rgba(196,181,253,0.3)" stroke-width="1"/>
+        <path d="M29 9.5 L21 14" stroke="rgba(196,181,253,0.2)" stroke-width="1"/>
+        <path d="M1 9.5 L9 14" stroke="rgba(196,181,253,0.2)" stroke-width="1"/>
+      </svg>
+    </div>
     <div>
       <h1>SHARDS</h1>
       <span>Tableau de bord</span>
@@ -241,7 +486,7 @@
   <div id="page-new-game" class="page">
     <div class="section-title">Enregistrer une partie</div>
     <div class="form-card">
-      <div class="form-grid" style="margin-bottom:1.2rem">
+      <div class="form-grid" style="margin-bottom:1.3rem">
         <div class="field">
           <label>Date</label>
           <input type="date" id="game-date">
@@ -285,10 +530,10 @@ const PLAYER_COLORS = ['#7c5cfc','#38bdf8','#4ade80','#fb923c','#f472b6','#a78bf
 
 const DEFAULT_DATA = {
   players: [
-    { name: 'Gildas', avatar: 'Tetra', color: PLAYER_COLORS[0] },
-    { name: 'Jules', avatar: 'Volos', color: PLAYER_COLORS[1] },
-    { name: 'François', avatar: 'Decima', color: PLAYER_COLORS[2] },
-    { name: 'Ben', avatar: 'Ko sin wu', color: PLAYER_COLORS[3] },
+    { name: 'Gildas',   avatar: 'Tetra',     color: PLAYER_COLORS[0] },
+    { name: 'Jules',    avatar: 'Volos',      color: PLAYER_COLORS[1] },
+    { name: 'François', avatar: 'Decima',     color: PLAYER_COLORS[2] },
+    { name: 'Ben',      avatar: 'Ko sin wu',  color: PLAYER_COLORS[3] },
   ],
   games: [
     {
@@ -368,6 +613,52 @@ function aggStats() {
 }
 
 // =========================================================
+// STEPPER — hold to repeat
+// =========================================================
+let _stepTimer = null, _stepInterval = null;
+
+function stepChange(id, dir, step, min, max) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  let val = parseFloat(input.value);
+  if (isNaN(val)) val = (min !== undefined ? min : 0);
+  val = Math.round((val + dir * step) / step) * step;
+  if (min !== undefined) val = Math.max(min, val);
+  if (max !== undefined) val = Math.min(max, val);
+  input.value = val % 1 === 0 ? val : val.toFixed(1);
+  // visual pulse
+  const stepper = input.closest('.stepper');
+  if (stepper) {
+    stepper.style.borderColor = 'rgba(167,139,250,.8)';
+    setTimeout(() => { stepper.style.borderColor = ''; }, 200);
+  }
+}
+
+function startStep(id, dir, step, min, max) {
+  stopStep();
+  stepChange(id, dir, step, min, max);
+  _stepTimer = setTimeout(() => {
+    _stepInterval = setInterval(() => stepChange(id, dir, step, min, max), 70);
+  }, 380);
+}
+
+function stopStep() {
+  clearTimeout(_stepTimer);
+  clearInterval(_stepInterval);
+  _stepTimer = null; _stepInterval = null;
+}
+
+// Auto-stop on pointer up anywhere
+document.addEventListener('pointerup', stopStep);
+document.addEventListener('pointercancel', stopStep);
+
+// Toggle checkpill
+function togglePill(checkbox, pill) {
+  checkbox.checked = !checkbox.checked;
+  pill.classList.toggle('checked', checkbox.checked);
+}
+
+// =========================================================
 // DASHBOARD
 // =========================================================
 let charts = {};
@@ -376,7 +667,6 @@ function renderDashboard() {
   const players = data.players;
   const totalGames = data.games.length;
 
-  // Summary tiles
   const topWinner = players.slice().sort((a,b) => (stats[b.name]?.wins||0) - (stats[a.name]?.wins||0))[0];
   document.getElementById('summary-tiles').innerHTML = `
     <div class="summary-tile"><div class="s-val">${totalGames}</div><div class="s-label">Parties jouées</div></div>
@@ -385,7 +675,6 @@ function renderDashboard() {
     <div class="summary-tile"><div class="s-val">${data.games.reduce((a,g)=>a+g.results.filter(r=>r.mvp).length,0)}</div><div class="s-label">MVP attribués</div></div>
   `;
 
-  // Player cards
   document.getElementById('player-cards').innerHTML = players.map(p => {
     const s = stats[p.name] || {};
     const games = s.games || 0;
@@ -410,7 +699,6 @@ function renderDashboard() {
     </div>`;
   }).join('');
 
-  // Charts
   const names = players.map(p => p.name);
   const colors = players.map(p => p.color);
   const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
@@ -424,8 +712,8 @@ function renderDashboard() {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: type !== 'pie' ? {
-          x: { ticks: { color: '#8888aa' }, grid: { color: '#2e2e5a' } },
-          y: { ticks: { color: '#8888aa' }, grid: { color: '#2e2e5a' }, beginAtZero: true, ...opts.y }
+          x: { ticks: { color: '#7878a0' }, grid: { color: 'rgba(42,42,80,.4)' } },
+          y: { ticks: { color: '#7878a0' }, grid: { color: 'rgba(42,42,80,.4)' }, beginAtZero: true, ...opts.y }
         } : {},
         ...opts
       }
@@ -434,25 +722,25 @@ function renderDashboard() {
 
   mkChart('chart-wins', 'bar', names, [{
     data: names.map(n => stats[n]?.wins||0),
-    backgroundColor: colors.map(c => alpha(c, .7)),
-    borderColor: colors, borderWidth: 2, borderRadius: 6
+    backgroundColor: colors.map(c => alpha(c, .65)),
+    borderColor: colors, borderWidth: 2, borderRadius: 7
   }]);
 
   mkChart('chart-rank', 'bar', names, [{
     data: names.map(n => stats[n]?.games ? (stats[n].totalRank/stats[n].games).toFixed(2) : 0),
-    backgroundColor: colors.map(c => alpha(c, .7)),
-    borderColor: colors, borderWidth: 2, borderRadius: 6
-  }], { y: { reverse: false } });
+    backgroundColor: colors.map(c => alpha(c, .65)),
+    borderColor: colors, borderWidth: 2, borderRadius: 7
+  }]);
 
   mkChart('chart-pdc', 'bar', names, [{
     data: names.map(n => stats[n]?.games ? Math.round(stats[n].totalPdc/stats[n].games) : 0),
-    backgroundColor: colors.map(c => alpha(c, .7)),
-    borderColor: colors, borderWidth: 2, borderRadius: 6
+    backgroundColor: colors.map(c => alpha(c, .65)),
+    borderColor: colors, borderWidth: 2, borderRadius: 7
   }]);
 
   mkChart('chart-elim', 'bar', names, [
-    { label: 'Élim. joueurs', data: names.map(n => stats[n]?.totalElim||0), backgroundColor: colors.map(c => alpha(c,.7)), borderColor: colors, borderWidth: 2, borderRadius: 4 },
-    { label: 'Élim. cristaux', data: names.map(n => stats[n]?.totalElimC||0), backgroundColor: '#fbbf2455', borderColor: '#fbbf24', borderWidth: 2, borderRadius: 4 }
+    { label: 'Élim. joueurs',  data: names.map(n => stats[n]?.totalElim||0),  backgroundColor: colors.map(c => alpha(c,.65)),  borderColor: colors, borderWidth: 2, borderRadius: 5 },
+    { label: 'Élim. cristaux', data: names.map(n => stats[n]?.totalElimC||0), backgroundColor: '#fbbf2440', borderColor: '#fbbf24', borderWidth: 2, borderRadius: 5 }
   ]);
 }
 
@@ -462,7 +750,7 @@ function renderDashboard() {
 function renderHistory() {
   const el = document.getElementById('games-list');
   if (!data.games.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">🎮</div>Aucune partie enregistrée.</div>';
+    el.innerHTML = '<div class="empty"><div class="empty-icon">💎</div>Aucune partie enregistrée.</div>';
     return;
   }
   el.innerHTML = [...data.games].reverse().map(g => {
@@ -501,9 +789,7 @@ function renderHistory() {
   }).join('');
 }
 
-function toggleGame(id) {
-  document.getElementById(id)?.classList.toggle('open');
-}
+function toggleGame(id) { document.getElementById(id)?.classList.toggle('open'); }
 function deleteGame(id) {
   if (!confirm('Supprimer cette partie ?')) return;
   data.games = data.games.filter(g => g.id !== id);
@@ -518,28 +804,80 @@ function formatDate(d) {
 }
 
 // =========================================================
+// STEPPER HTML helper
+// =========================================================
+function stepperHTML(id, value, step, min, max, big) {
+  const cls = big ? 'stepper big' : 'stepper';
+  return `<div class="${cls}">
+    <button class="stepper-btn minus"
+      onpointerdown="startStep('${id}',-1,${step},${min},${max})"
+      onpointerup="stopStep()" onpointerleave="stopStep()">−</button>
+    <input class="stepper-input" type="number" id="${id}" value="${value}" min="${min}" max="${max}" step="${step}" readonly>
+    <button class="stepper-btn plus"
+      onpointerdown="startStep('${id}',1,${step},${min},${max})"
+      onpointerup="stopStep()" onpointerleave="stopStep()">+</button>
+  </div>`;
+}
+
+// =========================================================
 // NEW GAME FORM
 // =========================================================
 function renderNewGameForm() {
   document.getElementById('game-date').value = new Date().toISOString().slice(0,10);
   const el = document.getElementById('player-forms');
-  el.innerHTML = data.players.map((p, i) => `
-    <div class="player-form-block" style="--player-color:${p.color};margin-bottom:.8rem">
-      <div class="player-form-title" style="color:${p.color}">${p.name} <span style="color:var(--text-muted);font-weight:400;font-size:.82rem">· ${p.avatar}</span></div>
+  el.innerHTML = data.players.map((p, i) => {
+    const gemPath = `<svg class="block-gem" viewBox="0 0 22 25" fill="none"><path d="M11 0 L22 7 L22 18 L11 25 L0 18 L0 7 Z" fill="${p.color}"/><path d="M11 4 L18 9 L18 16 L11 21 L4 16 L4 9 Z" fill="rgba(255,255,255,0.15)"/><path d="M11 8 L15 11 L11 17 L7 11 Z" fill="rgba(255,255,255,0.4)"/></svg>`;
+    return `
+    <div class="player-form-block" style="--player-color:${p.color}">
+      ${gemPath}
+      <div class="player-form-title" style="color:${p.color}">
+        ${p.name}
+        <span class="avatar-tag">${p.avatar}</span>
+      </div>
       <div class="form-grid">
-        <div class="field"><label>Classement (1 = 1er)</label><input type="number" min="1" max="10" step="0.5" id="r_${i}_classement" placeholder="Ex: 2" value=""></div>
-        <div class="field"><label>Pdc fin de partie</label><input type="number" min="0" id="r_${i}_pdc" placeholder="Ex: 22"></div>
-        <div class="field"><label>Cartes dans le deck</label><input type="number" min="0" id="r_${i}_cartes" placeholder="Ex: 15"></div>
-        <div class="field"><label>Éliminations joueurs</label><input type="number" min="0" id="r_${i}_elim" value="0"></div>
-        <div class="field"><label>Éliminations cristaux</label><input type="number" min="0" id="r_${i}_elimc" value="0"></div>
-        <div style="display:flex;flex-direction:column;gap:.5rem;justify-content:center">
-          <label class="checkbox-field"><input type="checkbox" id="r_${i}_victoire"> Victoire 🏆</label>
-          <label class="checkbox-field"><input type="checkbox" id="r_${i}_mvp"> MVP ⭐</label>
-          <label class="checkbox-field"><input type="checkbox" id="r_${i}_lvp"> LVP 💀</label>
+        <div class="field">
+          <label>Classement (1 = 1er)</label>
+          ${stepperHTML(`r_${i}_classement`, '', 0.5, 1, 10, false)}
+        </div>
+        <div class="field">
+          <label>Pdc fin de partie</label>
+          ${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 999, true)}
+        </div>
+        <div class="field">
+          <label>Cartes dans le deck</label>
+          ${stepperHTML(`r_${i}_cartes`, '0', 1, 0, 99, false)}
+        </div>
+        <div class="field">
+          <label>Éliminations joueurs</label>
+          ${stepperHTML(`r_${i}_elim`, '0', 1, 0, 99, false)}
+        </div>
+        <div class="field">
+          <label>Éliminations 💎 cristaux</label>
+          ${stepperHTML(`r_${i}_elimc`, '0', 1, 0, 99, false)}
+        </div>
+        <div class="field">
+          <label>Résultats</label>
+          <div class="checks-col">
+            <div class="check-pill" id="pill_${i}_victoire" onclick="togglePill(document.getElementById('r_${i}_victoire'), this)">
+              <input type="checkbox" id="r_${i}_victoire">
+              <span class="pill-dot"></span>
+              Victoire 🏆
+            </div>
+            <div class="check-pill" id="pill_${i}_mvp" onclick="togglePill(document.getElementById('r_${i}_mvp'), this)">
+              <input type="checkbox" id="r_${i}_mvp">
+              <span class="pill-dot"></span>
+              MVP ⭐
+            </div>
+            <div class="check-pill" id="pill_${i}_lvp" onclick="togglePill(document.getElementById('r_${i}_lvp'), this)">
+              <input type="checkbox" id="r_${i}_lvp">
+              <span class="pill-dot"></span>
+              LVP 💀
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 function resetForm() { renderNewGameForm(); }
