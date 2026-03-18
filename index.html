@@ -1,487 +1,634 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Juju va faire à François</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shards — Stats</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0e0e1a;
+    --surface: #16162a;
+    --surface2: #1e1e38;
+    --border: #2e2e5a;
+    --accent: #7c5cfc;
+    --accent2: #a78bfa;
+    --text: #e2e2f0;
+    --text-muted: #8888aa;
+    --c0: #7c5cfc; /* Gildas */
+    --c1: #38bdf8; /* Jules */
+    --c2: #4ade80; /* François */
+    --c3: #fb923c; /* Ben */
+    --win: #4ade80;
+    --loss: #f87171;
+    --gold: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #1a1040 0%, #0e0e1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: .7rem; }
+  .logo-icon { font-size: 1.8rem; }
+  .logo h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: .15em; color: var(--accent2); }
+  .logo span { font-size: .75rem; color: var(--text-muted); display: block; letter-spacing: .2em; text-transform: uppercase; }
+  nav { display: flex; gap: .3rem; }
+  nav button {
+    background: transparent; border: 1px solid transparent; color: var(--text-muted);
+    padding: .5rem 1.1rem; border-radius: 8px; cursor: pointer; font-size: .85rem;
+    transition: all .2s;
+  }
+  nav button:hover { border-color: var(--border); color: var(--text); }
+  nav button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    :root {
-      --pink1:  #FFB3C6;
-      --pink2:  #FF6B9D;
-      --pink3:  #FF4D7E;
-      --pinkbg: #FFF0F5;
-      --dark:   #3D0020;
-      --white:  #ffffff;
-    }
+  /* LAYOUT */
+  main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .page { display: none; }
+  .page.active { display: block; }
 
-    html, body { height: 100%; overflow: hidden; }
+  /* SECTION TITLE */
+  .section-title { font-size: 1.1rem; font-weight: 600; color: var(--accent2); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 1.2rem; }
 
-    body {
-      background: radial-gradient(ellipse at 60% 0%, #FFD6E7 0%, var(--pinkbg) 60%);
-      font-family: 'Nunito', 'Arial Rounded MT Bold', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 20px;
-      gap: 8px;
-    }
+  /* PLAYER CARDS */
+  .player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .player-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform .2s, border-color .2s;
+  }
+  .player-card:hover { transform: translateY(-2px); }
+  .player-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--player-color);
+  }
+  .player-card .player-name { font-size: 1.1rem; font-weight: 700; }
+  .player-card .player-avatar { font-size: .78rem; color: var(--text-muted); margin-bottom: .9rem; text-transform: uppercase; letter-spacing: .12em; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: .3rem 0; border-bottom: 1px solid var(--border); }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: .8rem; color: var(--text-muted); }
+  .stat-val { font-size: .92rem; font-weight: 600; }
+  .badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .7rem; font-weight: 700; padding: .18rem .5rem; border-radius: 6px; text-transform: uppercase; letter-spacing: .08em; }
+  .badge-mvp { background: rgba(251,191,36,.15); color: var(--gold); }
+  .badge-lvp { background: rgba(248,113,113,.15); color: var(--loss); }
+  .badge-win { background: rgba(74,222,128,.15); color: var(--win); }
+  .badges-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .5rem; }
 
-    /* ── Hearts canvas ── */
-    #hearts {
-      position: fixed;
-      inset: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 100;
-    }
+  /* CHARTS */
+  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.3rem; }
+  .chart-card h3 { font-size: .85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 1rem; }
+  .chart-wrap { position: relative; height: 220px; }
 
-    /* ── Bratz cowgirl ── */
-    .bratz-girl {
-      width: 62px;
-      height: auto;
-      filter: drop-shadow(2px 5px 10px rgba(255,77,126,0.3));
-      flex-shrink: 0;
-    }
+  /* HISTORY TABLE */
+  .games-list { display: flex; flex-direction: column; gap: 1rem; }
+  .game-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .game-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .8rem 1.2rem;
+    background: var(--surface2);
+    cursor: pointer;
+  }
+  .game-header .game-date { font-size: .85rem; color: var(--text-muted); }
+  .game-header .game-title { font-weight: 600; }
+  .game-header .chevron { transition: transform .2s; font-size: .8rem; color: var(--text-muted); }
+  .game-card.open .chevron { transform: rotate(180deg); }
+  .game-body { display: none; padding: 1rem 1.2rem; }
+  .game-card.open .game-body { display: block; }
+  .game-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  .game-table th { text-align: left; padding: .4rem .6rem; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+  .game-table td { padding: .4rem .6rem; border-bottom: 1px solid rgba(46,46,90,.4); }
+  .game-table tr:last-child td { border-bottom: none; }
+  .rank-1 { color: var(--gold); font-weight: 700; }
+  .rank-2 { color: #c0c0c0; font-weight: 600; }
+  .rank-3 { color: #cd7f32; }
+  .delete-btn {
+    background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3);
+    color: var(--loss); border-radius: 6px; padding: .25rem .6rem;
+    font-size: .75rem; cursor: pointer; transition: all .2s;
+  }
+  .delete-btn:hover { background: rgba(248,113,113,.25); }
 
-    /* ── Title ── */
-    h1 {
-      font-size: clamp(1.5rem, 3vw, 2.2rem);
-      font-weight: 900;
-      color: var(--dark);
-      text-align: center;
-      line-height: 1.1;
-      text-shadow: 1px 2px 5px rgba(255,107,157,0.3);
-      flex-shrink: 0;
-    }
+  /* NEW GAME FORM */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .form-section-title { font-size: .8rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 1rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+  .field { display: flex; flex-direction: column; gap: .35rem; }
+  .field label { font-size: .78rem; color: var(--text-muted); font-weight: 500; }
+  .field input, .field select {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: .5rem .75rem; border-radius: 8px; font-size: .88rem;
+    transition: border-color .2s;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  .field input[type="checkbox"] { width: auto; cursor: pointer; }
+  .checkbox-field { flex-direction: row; align-items: center; gap: .5rem; cursor: pointer; }
+  .checkbox-field label { cursor: pointer; font-size: .88rem; color: var(--text); }
+  .player-form-block {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem; position: relative;
+  }
+  .player-form-block::before {
+    content: '';
+    position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+    background: var(--player-color); border-radius: 3px 0 0 3px;
+  }
+  .player-form-title { font-weight: 700; margin-bottom: .8rem; font-size: .95rem; }
+  .form-actions { display: flex; gap: .8rem; margin-top: 1.5rem; }
+  .btn {
+    padding: .65rem 1.5rem; border-radius: 9px; font-size: .9rem; font-weight: 600;
+    cursor: pointer; transition: all .2s; border: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6b4de6; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent2); }
 
-    .subtitle {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #C06;
-      opacity: 0.7;
-      text-align: center;
-      letter-spacing: 0.04em;
-      flex-shrink: 0;
-    }
+  /* PLAYERS MANAGEMENT */
+  .players-list { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
+  .player-tag {
+    display: flex; align-items: center; gap: .5rem;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: .3rem .7rem .3rem .5rem; font-size: .83rem;
+  }
+  .player-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .remove-player { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .9rem; line-height: 1; }
+  .remove-player:hover { color: var(--loss); }
+  .add-player-row { display: flex; gap: .6rem; align-items: center; }
+  .add-player-row input { flex: 1; }
+  .add-player-row input:nth-child(2) { flex: .8; }
 
-    /* ── Wheel ── */
-    .wheel-container {
-      position: relative;
-      width: 300px;
-      height: 300px;
-      flex-shrink: 0;
-      filter: drop-shadow(2px 8px 22px rgba(255,77,126,0.3));
-    }
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem;
+    background: var(--accent); color: #fff;
+    padding: .75rem 1.3rem; border-radius: 10px;
+    font-size: .88rem; font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    transform: translateY(100px); opacity: 0;
+    transition: all .3s; z-index: 999;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
 
-    .pointer {
-      position: absolute;
-      top: -14px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.2rem;
-      z-index: 10;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-      line-height: 1;
-    }
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 3rem; color: var(--text-muted); }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
 
-    canvas#wheel {
-      border-radius: 50%;
-      cursor: pointer;
-      transition: transform 0.12s;
-      width: 300px;
-      height: 300px;
-    }
-    canvas#wheel:hover { transform: scale(1.02); }
+  /* SUMMARY STATS */
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .8rem; margin-bottom: 2rem; }
+  .summary-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
+  .summary-tile .s-val { font-size: 1.8rem; font-weight: 800; color: var(--accent2); }
+  .summary-tile .s-label { font-size: .75rem; color: var(--text-muted); margin-top: .3rem; text-transform: uppercase; letter-spacing: .08em; }
 
-    /* ── Center button ── */
-    .center-btn {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 68px; height: 68px;
-      border-radius: 50%;
-      background: var(--white);
-      border: 4px solid var(--pink1);
-      color: var(--dark);
-      font-family: 'Nunito', sans-serif;
-      font-weight: 900;
-      font-size: 1.4rem;
-      cursor: pointer;
-      z-index: 10;
-      box-shadow: 2px 4px 14px rgba(255,107,157,0.25);
-      transition: background 0.15s, transform 0.12s, border-color 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .center-btn:hover {
-      background: var(--pink3);
-      border-color: var(--pink3);
-      transform: translate(-50%, -50%) scale(1.08);
-    }
-    .center-btn:active  { transform: translate(-50%, -50%) scale(0.96); }
-    .center-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: translate(-50%, -50%);
-    }
-
-    /* ── Result card ── */
-    .result-card {
-      background: var(--white);
-      border-radius: 20px;
-      overflow: hidden;
-      text-align: center;
-      min-width: 260px;
-      max-width: 340px;
-      opacity: 0;
-      transform: translateY(12px) scale(0.97);
-      transition: opacity 0.4s ease, transform 0.4s ease;
-      pointer-events: none;
-      box-shadow: 2px 6px 24px rgba(255,77,126,0.25);
-      flex-shrink: 0;
-    }
-    .result-card.visible {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      pointer-events: all;
-    }
-
-    .result-header {
-      background: linear-gradient(135deg, var(--pink1), var(--pink2));
-      padding: 12px 32px;
-      box-shadow: 0 2px 8px rgba(255,107,157,0.3);
-    }
-    .result-label {
-      font-size: 0.72rem;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--white);
-    }
-    .result-body { padding: 14px 32px 18px; }
-    .result-name {
-      font-size: 1.5rem;
-      font-weight: 900;
-      color: var(--dark);
-      line-height: 1.2;
-      margin-bottom: 4px;
-    }
-    .result-sub {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--pink2);
-    }
-
-    /* ── Boot badges ── */
-    .boots {
-      position: fixed;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.1rem;
-      opacity: 0.45;
-      letter-spacing: 4px;
-      pointer-events: none;
-    }
-  </style>
+  @media (max-width: 600px) {
+    header { padding: .8rem 1rem; flex-direction: column; gap: .6rem; }
+    main { padding: 1rem; }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
 
-  <canvas id="hearts"></canvas>
-
-  <!-- Bratz-style cowgirl SVG -->
-  <svg class="bratz-girl" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
-    <!-- Chapeau de cowboy -->
-    <ellipse cx="50" cy="38" rx="34" ry="7" fill="#8B4513"/>
-    <rect x="30" y="10" width="40" height="30" rx="8" fill="#A0522D"/>
-    <ellipse cx="50" cy="10" rx="20" ry="6" fill="#8B4513"/>
-    <!-- Ruban chapeau -->
-    <rect x="30" y="36" width="40" height="5" rx="2" fill="#FF6B9D"/>
-    <circle cx="50" cy="38" r="3" fill="#FFD700"/>
-    <!-- Visage — Bratz : grand, menton petit -->
-    <ellipse cx="50" cy="62" rx="22" ry="25" fill="#FDDBB4"/>
-    <!-- Cheveux -->
-    <ellipse cx="50" cy="50" rx="23" ry="14" fill="#3B1F00"/>
-    <path d="M28 55 Q22 80 26 95" stroke="#3B1F00" stroke-width="8" fill="none" stroke-linecap="round"/>
-    <path d="M72 55 Q78 80 74 95" stroke="#3B1F00" stroke-width="8" fill="none" stroke-linecap="round"/>
-    <!-- Sourcils -->
-    <path d="M35 52 Q40 49 44 51" stroke="#3B1F00" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <path d="M56 51 Q60 49 65 52" stroke="#3B1F00" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <!-- Grands yeux Bratz -->
-    <ellipse cx="40" cy="59" rx="9" ry="10" fill="white"/>
-    <ellipse cx="60" cy="59" rx="9" ry="10" fill="white"/>
-    <ellipse cx="40" cy="60" rx="6" ry="7" fill="#5C3317"/>
-    <ellipse cx="60" cy="60" rx="6" ry="7" fill="#5C3317"/>
-    <ellipse cx="40" cy="60" rx="3.5" ry="4" fill="#1a0a00"/>
-    <ellipse cx="60" cy="60" rx="3.5" ry="4" fill="#1a0a00"/>
-    <circle cx="42" cy="57" r="1.5" fill="white"/>
-    <circle cx="62" cy="57" r="1.5" fill="white"/>
-    <!-- Cils -->
-    <path d="M32 54 Q33 51 35 53" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
-    <path d="M35 52 Q36 49 38 52" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
-    <path d="M38 51 Q40 48 42 51" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
-    <path d="M46 51 Q48 48 50 51" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
-    <path d="M52 52 Q54 49 56 52" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
-    <path d="M56 52 Q58 49 60 52" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
-    <path d="M62 51 Q64 48 66 52" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
-    <path d="M66 53 Q68 50 70 54" stroke="#1a0a00" stroke-width="1.2" fill="none"/>
-    <!-- Nez petit -->
-    <ellipse cx="50" cy="69" rx="2.5" ry="1.5" fill="#F0A070" opacity="0.6"/>
-    <!-- Lèvres pulpeuses Bratz -->
-    <path d="M40 76 Q45 73 50 74 Q55 73 60 76 Q55 82 50 82 Q45 82 40 76Z" fill="#FF4D7E"/>
-    <path d="M40 76 Q50 79 60 76" stroke="#FF2060" stroke-width="0.8" fill="none"/>
-    <path d="M44 74 Q50 72 56 74" fill="#FFB3C6"/>
-    <!-- Blush -->
-    <ellipse cx="32" cy="68" rx="5" ry="3" fill="#FFB3C6" opacity="0.5"/>
-    <ellipse cx="68" cy="68" rx="5" ry="3" fill="#FFB3C6" opacity="0.5"/>
-    <!-- Corps / épaules -->
-    <path d="M28 87 Q50 82 72 87 L75 115 Q50 120 25 115Z" fill="#FF6B9D"/>
-    <!-- Étoile sur la veste -->
-    <polygon points="50,92 52,97 57,97 53,100 55,105 50,102 45,105 47,100 43,97 48,97" fill="#FFD700" opacity="0.9"/>
-  </svg>
-  <h1>Juju va faire à François</h1>
-
-  <div class="wheel-container">
-    <div class="pointer">🌟</div>
-    <canvas id="wheel" width="300" height="300"></canvas>
-    <button class="center-btn" id="spinBtn" onclick="spin()">💕</button>
-  </div>
-
-  <div class="result-card" id="result">
-    <div class="result-header">
-      <div class="result-label" id="resultLabel">Juju va lui faire…</div>
+<header>
+  <div class="logo">
+    <span class="logo-icon">💎</span>
+    <div>
+      <h1>SHARDS</h1>
+      <span>Tableau de bord</span>
     </div>
-    <div class="result-body">
-      <div class="result-name" id="resultName">—</div>
-      <div class="result-sub" id="resultSub">🥾 yeehaw 🥾</div>
+  </div>
+  <nav>
+    <button class="active" onclick="showPage('dashboard')">Dashboard</button>
+    <button onclick="showPage('history')">Historique</button>
+    <button onclick="showPage('new-game')">+ Nouvelle partie</button>
+    <button onclick="showPage('settings')">Joueurs</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div id="summary-tiles" class="summary-grid"></div>
+    <div class="section-title">Stats par joueur</div>
+    <div id="player-cards" class="player-grid"></div>
+    <div class="section-title">Comparaisons</div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
+      <div class="chart-card"><h3>Classement moyen</h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
+      <div class="chart-card"><h3>Pdc fin de partie (moy.)</h3><div class="chart-wrap"><canvas id="chart-pdc"></canvas></div></div>
+      <div class="chart-card"><h3>Éliminations</h3><div class="chart-wrap"><canvas id="chart-elim"></canvas></div></div>
     </div>
   </div>
 
-  <div class="boots">🥾🤠🥾</div>
+  <!-- HISTORY -->
+  <div id="page-history" class="page">
+    <div class="section-title">Historique des parties</div>
+    <div id="games-list" class="games-list"></div>
+  </div>
 
-  <script>
-    // ═══════════════════════════════════
-    //  WHEEL
-    // ═══════════════════════════════════
-    const canvas = document.getElementById('wheel');
-    const ctx    = canvas.getContext('2d');
-    const cx = canvas.width  / 2;
-    const cy = canvas.height / 2;
-    const r  = canvas.width  / 2 - 3;
+  <!-- NEW GAME -->
+  <div id="page-new-game" class="page">
+    <div class="section-title">Enregistrer une partie</div>
+    <div class="form-card">
+      <div class="form-grid" style="margin-bottom:1.2rem">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="game-date">
+        </div>
+        <div class="field">
+          <label>Notes (optionnel)</label>
+          <input type="text" id="game-notes" placeholder="Ex: soirée du vendredi">
+        </div>
+      </div>
+      <div id="player-forms"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveGame()">Enregistrer la partie</button>
+        <button class="btn btn-secondary" onclick="resetForm()">Réinitialiser</button>
+      </div>
+    </div>
+  </div>
 
-    const segments = [
-      { label: 'Un bisou\nde 6 secondes', color: '#FFB3C6', textColor: '#3D0020' },
-      { label: '1 spectacle',             color: '#FF8FAD', textColor: '#ffffff' },
-      { label: 'Des oeufs\nau ketchup',   color: '#FFD1DC', textColor: '#3D0020' },
-      { label: 'Un croche-pied',          color: '#FF6B9D', textColor: '#ffffff' },
-      { label: 'Un prout\nsous la couette', color: '#FFB3C6', textColor: '#3D0020' },
-      { label: 'Un massage',              color: '#FF4D7E', textColor: '#ffffff' },
-      { label: 'Une prise\nde judo',      color: '#FFD1DC', textColor: '#3D0020' },
-    ];
+  <!-- SETTINGS -->
+  <div id="page-settings" class="page">
+    <div class="section-title">Gestion des joueurs</div>
+    <div class="form-card">
+      <div class="form-section-title">Joueurs actifs</div>
+      <div id="players-list" class="players-list"></div>
+      <div class="add-player-row">
+        <input type="text" id="new-player-name" placeholder="Nom du joueur">
+        <input type="text" id="new-player-avatar" placeholder="Avatar">
+        <button class="btn btn-primary" onclick="addPlayer()">Ajouter</button>
+      </div>
+    </div>
+  </div>
 
-    const numSeg  = segments.length;
-    const arcSize = (2 * Math.PI) / numSeg;
-    let currentAngle = 0;
-    let spinning     = false;
+</main>
 
-    function drawWheel(angle) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+<div id="toast" class="toast"></div>
 
-      for (let i = 0; i < numSeg; i++) {
-        const start = angle + i * arcSize;
-        const end   = start + arcSize;
-        const seg   = segments[i];
+<script>
+// =========================================================
+// DATA MODEL
+// =========================================================
+const PLAYER_COLORS = ['#7c5cfc','#38bdf8','#4ade80','#fb923c','#f472b6','#a78bfa','#fbbf24','#34d399'];
 
-        // Fill
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, r, start, end);
-        ctx.closePath();
-        ctx.fillStyle = seg.color;
-        ctx.fill();
+const DEFAULT_DATA = {
+  players: [
+    { name: 'Gildas', avatar: 'Tetra', color: PLAYER_COLORS[0] },
+    { name: 'Jules', avatar: 'Volos', color: PLAYER_COLORS[1] },
+    { name: 'François', avatar: 'Decima', color: PLAYER_COLORS[2] },
+    { name: 'Ben', avatar: 'Ko sin wu', color: PLAYER_COLORS[3] },
+  ],
+  games: [
+    {
+      id: 'game-001',
+      date: '2026-03-18',
+      notes: 'Première partie enregistrée',
+      results: [
+        { player: 'Gildas',   avatar: 'Tetra',     eliminations: 1, elimCristaux: 0, victoire: false, classement: 2.5, pdcFin: 22, nbCartes: 23, mvp: false, lvp: false },
+        { player: 'Jules',    avatar: 'Volos',      eliminations: 0, elimCristaux: 0, victoire: false, classement: 4,   pdcFin: 17, nbCartes: 17, mvp: true,  lvp: false },
+        { player: 'François', avatar: 'Decima',     eliminations: 0, elimCristaux: 1, victoire: true,  classement: 1,   pdcFin: 30, nbCartes: 12, mvp: false, lvp: true  },
+        { player: 'Ben',      avatar: 'Ko sin wu',  eliminations: 0, elimCristaux: 0, victoire: false, classement: 2.5, pdcFin: 11, nbCartes: 20, mvp: false, lvp: false },
+      ]
+    }
+  ]
+};
 
-        // Divider
-        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-        ctx.lineWidth   = 2;
-        ctx.stroke();
+function loadData() {
+  try {
+    const raw = localStorage.getItem('shards-data');
+    return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+  } catch { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+}
+function saveData(d) { localStorage.setItem('shards-data', JSON.stringify(d)); }
 
-        // Label (handle \n for two lines)
-        const lines = seg.label.split('\n');
-        const fontSize = lines.some(l => l.length > 10) ? 10 : 12;
-        const midAngle = start + arcSize / 2;
-        const textR    = r - 20;
+let data = loadData();
 
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(midAngle);
-        ctx.textAlign  = 'right';
-        ctx.fillStyle  = seg.textColor;
-        ctx.font       = `900 ${fontSize}px Nunito, sans-serif`;
-        ctx.shadowColor   = 'rgba(0,0,0,0.1)';
-        ctx.shadowBlur    = 3;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
+// =========================================================
+// NAVIGATION
+// =========================================================
+const navBtns = document.querySelectorAll('nav button');
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  navBtns.forEach((b, i) => {
+    const ids = ['dashboard','history','new-game','settings'];
+    b.classList.toggle('active', ids[i] === id);
+  });
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'history') renderHistory();
+  if (id === 'new-game') renderNewGameForm();
+  if (id === 'settings') renderSettings();
+}
 
-        if (lines.length === 1) {
-          ctx.fillText(lines[0], textR, 4);
-        } else {
-          const lh = fontSize + 2;
-          ctx.fillText(lines[0], textR, -lh / 2 + 2);
-          ctx.fillText(lines[1], textR,  lh / 2 + 2);
-        }
-        ctx.restore();
+// =========================================================
+// HELPERS
+// =========================================================
+function playerColor(name) {
+  const p = data.players.find(p => p.name === name);
+  return p ? p.color : '#888';
+}
+function playerAvatar(name) {
+  const p = data.players.find(p => p.name === name);
+  return p ? p.avatar : '';
+}
+
+function aggStats() {
+  const stats = {};
+  data.players.forEach(p => {
+    stats[p.name] = { wins: 0, games: 0, totalRank: 0, totalPdc: 0, totalElim: 0, totalElimC: 0, mvp: 0, lvp: 0, totalCards: 0 };
+  });
+  data.games.forEach(g => {
+    g.results.forEach(r => {
+      if (!stats[r.player]) stats[r.player] = { wins:0,games:0,totalRank:0,totalPdc:0,totalElim:0,totalElimC:0,mvp:0,lvp:0,totalCards:0 };
+      const s = stats[r.player];
+      s.games++;
+      if (r.victoire) s.wins++;
+      s.totalRank += r.classement;
+      s.totalPdc += r.pdcFin;
+      s.totalElim += r.eliminations;
+      s.totalElimC += r.elimCristaux;
+      if (r.mvp) s.mvp++;
+      if (r.lvp) s.lvp++;
+      s.totalCards += r.nbCartes || 0;
+    });
+  });
+  return stats;
+}
+
+// =========================================================
+// DASHBOARD
+// =========================================================
+let charts = {};
+function renderDashboard() {
+  const stats = aggStats();
+  const players = data.players;
+  const totalGames = data.games.length;
+
+  // Summary tiles
+  const topWinner = players.slice().sort((a,b) => (stats[b.name]?.wins||0) - (stats[a.name]?.wins||0))[0];
+  document.getElementById('summary-tiles').innerHTML = `
+    <div class="summary-tile"><div class="s-val">${totalGames}</div><div class="s-label">Parties jouées</div></div>
+    <div class="summary-tile"><div class="s-val">${players.length}</div><div class="s-label">Joueurs</div></div>
+    <div class="summary-tile"><div class="s-val" style="color:${topWinner?topWinner.color:'#fff'}">${topWinner?.name||'-'}</div><div class="s-label">Meilleur joueur</div></div>
+    <div class="summary-tile"><div class="s-val">${data.games.reduce((a,g)=>a+g.results.filter(r=>r.mvp).length,0)}</div><div class="s-label">MVP attribués</div></div>
+  `;
+
+  // Player cards
+  document.getElementById('player-cards').innerHTML = players.map(p => {
+    const s = stats[p.name] || {};
+    const games = s.games || 0;
+    const winRate = games ? Math.round(s.wins/games*100) : 0;
+    const avgRank = games ? (s.totalRank/games).toFixed(1) : '-';
+    const avgPdc = games ? Math.round(s.totalPdc/games) : '-';
+    const badges = [
+      s.mvp > 0 ? `<span class="badge badge-mvp">⭐ MVP ×${s.mvp}</span>` : '',
+      s.lvp > 0 ? `<span class="badge badge-lvp">💀 LVP ×${s.lvp}</span>` : '',
+      s.wins > 0 ? `<span class="badge badge-win">🏆 ×${s.wins}</span>` : '',
+    ].filter(Boolean).join('');
+    return `
+    <div class="player-card" style="--player-color:${p.color}">
+      <div class="player-name">${p.name}</div>
+      <div class="player-avatar">${p.avatar}</div>
+      <div class="stat-row"><span class="stat-label">Parties</span><span class="stat-val">${games}</span></div>
+      <div class="stat-row"><span class="stat-label">Victoires</span><span class="stat-val" style="color:var(--win)">${s.wins||0} <span style="color:var(--text-muted);font-size:.78rem">(${winRate}%)</span></span></div>
+      <div class="stat-row"><span class="stat-label">Classement moy.</span><span class="stat-val">${avgRank}</span></div>
+      <div class="stat-row"><span class="stat-label">Pdc moyen</span><span class="stat-val">${avgPdc}</span></div>
+      <div class="stat-row"><span class="stat-label">Éliminations</span><span class="stat-val">${s.totalElim||0} <span style="color:var(--text-muted);font-size:.78rem">(+${s.totalElimC||0} 💎)</span></span></div>
+      ${badges ? `<div class="badges-row">${badges}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Charts
+  const names = players.map(p => p.name);
+  const colors = players.map(p => p.color);
+  const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
+
+  const mkChart = (id, type, labels, datasets, opts={}) => {
+    if (charts[id]) charts[id].destroy();
+    const ctx = document.getElementById(id).getContext('2d');
+    charts[id] = new Chart(ctx, {
+      type, data: { labels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: type !== 'pie' ? {
+          x: { ticks: { color: '#8888aa' }, grid: { color: '#2e2e5a' } },
+          y: { ticks: { color: '#8888aa' }, grid: { color: '#2e2e5a' }, beginAtZero: true, ...opts.y }
+        } : {},
+        ...opts
       }
+    });
+  };
 
-      // Pink outer ring
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-      ctx.strokeStyle = '#FF6B9D';
-      ctx.lineWidth   = 5;
-      ctx.stroke();
-    }
+  mkChart('chart-wins', 'bar', names, [{
+    data: names.map(n => stats[n]?.wins||0),
+    backgroundColor: colors.map(c => alpha(c, .7)),
+    borderColor: colors, borderWidth: 2, borderRadius: 6
+  }]);
 
-    drawWheel(currentAngle);
+  mkChart('chart-rank', 'bar', names, [{
+    data: names.map(n => stats[n]?.games ? (stats[n].totalRank/stats[n].games).toFixed(2) : 0),
+    backgroundColor: colors.map(c => alpha(c, .7)),
+    borderColor: colors, borderWidth: 2, borderRadius: 6
+  }], { y: { reverse: false } });
 
-    function spin() {
-      if (spinning) return;
-      spinning = true;
+  mkChart('chart-pdc', 'bar', names, [{
+    data: names.map(n => stats[n]?.games ? Math.round(stats[n].totalPdc/stats[n].games) : 0),
+    backgroundColor: colors.map(c => alpha(c, .7)),
+    borderColor: colors, borderWidth: 2, borderRadius: 6
+  }]);
 
-      const btn = document.getElementById('spinBtn');
-      btn.disabled    = true;
-      btn.textContent = '💫';
+  mkChart('chart-elim', 'bar', names, [
+    { label: 'Élim. joueurs', data: names.map(n => stats[n]?.totalElim||0), backgroundColor: colors.map(c => alpha(c,.7)), borderColor: colors, borderWidth: 2, borderRadius: 4 },
+    { label: 'Élim. cristaux', data: names.map(n => stats[n]?.totalElimC||0), backgroundColor: '#fbbf2455', borderColor: '#fbbf24', borderWidth: 2, borderRadius: 4 }
+  ]);
+}
 
-      document.getElementById('result').classList.remove('visible');
-      stopHearts();
+// =========================================================
+// HISTORY
+// =========================================================
+function renderHistory() {
+  const el = document.getElementById('games-list');
+  if (!data.games.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🎮</div>Aucune partie enregistrée.</div>';
+    return;
+  }
+  el.innerHTML = [...data.games].reverse().map(g => {
+    const winner = g.results.find(r => r.victoire);
+    const sorted = [...g.results].sort((a,b) => a.classement - b.classement);
+    const rows = sorted.map(r => {
+      const rankClass = r.classement === 1 ? 'rank-1' : r.classement <= 2 ? 'rank-2' : r.classement <= 3 ? 'rank-3' : '';
+      const color = playerColor(r.player);
+      return `<tr>
+        <td><span style="color:${color};font-weight:700">${r.player}</span> <span style="color:var(--text-muted);font-size:.78rem">${r.avatar}</span></td>
+        <td class="${rankClass}">#${r.classement}</td>
+        <td>${r.pdcFin} pdc</td>
+        <td>${r.eliminations}${r.elimCristaux > 0 ? ` +${r.elimCristaux}💎` : ''}</td>
+        <td>${r.nbCartes || '-'} cartes</td>
+        <td>${r.mvp ? '<span class="badge badge-mvp">MVP</span>' : ''}${r.lvp ? '<span class="badge badge-lvp">LVP</span>' : ''}${r.victoire ? '<span class="badge badge-win">Victoire</span>' : ''}</td>
+      </tr>`;
+    }).join('');
+    return `<div class="game-card" id="${g.id}">
+      <div class="game-header" onclick="toggleGame('${g.id}')">
+        <div>
+          <div class="game-title">Partie du ${formatDate(g.date)} ${g.notes ? '— ' + g.notes : ''}</div>
+          <div class="game-date">${g.results.length} joueurs · Vainqueur : <span style="color:${winner?playerColor(winner.player):'#888'};font-weight:700">${winner?.player||'–'}</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.8rem">
+          <button class="delete-btn" onclick="event.stopPropagation();deleteGame('${g.id}')">Supprimer</button>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="game-body">
+        <table class="game-table">
+          <tr><th>Joueur</th><th>Classement</th><th>Points</th><th>Éliminations</th><th>Deck</th><th>Badges</th></tr>
+          ${rows}
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-      const extraSpins  = (5 + Math.random() * 5) * 2 * Math.PI;
-      const targetAngle = currentAngle + extraSpins + Math.random() * 2 * Math.PI;
-      const duration    = 3500 + Math.random() * 800;
-      const startTime   = performance.now();
-      const startAngle  = currentAngle;
+function toggleGame(id) {
+  document.getElementById(id)?.classList.toggle('open');
+}
+function deleteGame(id) {
+  if (!confirm('Supprimer cette partie ?')) return;
+  data.games = data.games.filter(g => g.id !== id);
+  saveData(data);
+  renderHistory();
+  toast('Partie supprimée');
+}
+function formatDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
 
-      function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+// =========================================================
+// NEW GAME FORM
+// =========================================================
+function renderNewGameForm() {
+  document.getElementById('game-date').value = new Date().toISOString().slice(0,10);
+  const el = document.getElementById('player-forms');
+  el.innerHTML = data.players.map((p, i) => `
+    <div class="player-form-block" style="--player-color:${p.color};margin-bottom:.8rem">
+      <div class="player-form-title" style="color:${p.color}">${p.name} <span style="color:var(--text-muted);font-weight:400;font-size:.82rem">· ${p.avatar}</span></div>
+      <div class="form-grid">
+        <div class="field"><label>Classement (1 = 1er)</label><input type="number" min="1" max="10" step="0.5" id="r_${i}_classement" placeholder="Ex: 2" value=""></div>
+        <div class="field"><label>Pdc fin de partie</label><input type="number" min="0" id="r_${i}_pdc" placeholder="Ex: 22"></div>
+        <div class="field"><label>Cartes dans le deck</label><input type="number" min="0" id="r_${i}_cartes" placeholder="Ex: 15"></div>
+        <div class="field"><label>Éliminations joueurs</label><input type="number" min="0" id="r_${i}_elim" value="0"></div>
+        <div class="field"><label>Éliminations cristaux</label><input type="number" min="0" id="r_${i}_elimc" value="0"></div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;justify-content:center">
+          <label class="checkbox-field"><input type="checkbox" id="r_${i}_victoire"> Victoire 🏆</label>
+          <label class="checkbox-field"><input type="checkbox" id="r_${i}_mvp"> MVP ⭐</label>
+          <label class="checkbox-field"><input type="checkbox" id="r_${i}_lvp"> LVP 💀</label>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
 
-      function frame(now) {
-        const t = Math.min((now - startTime) / duration, 1);
-        currentAngle = startAngle + (targetAngle - startAngle) * easeOut(t);
-        drawWheel(currentAngle);
+function resetForm() { renderNewGameForm(); }
 
-        if (t < 1) {
-          requestAnimationFrame(frame);
-        } else {
-          currentAngle    = targetAngle % (2 * Math.PI);
-          spinning        = false;
-          btn.disabled    = false;
-          btn.textContent = '💕';
-          showResult();
-        }
-      }
+function saveGame() {
+  const date = document.getElementById('game-date').value;
+  const notes = document.getElementById('game-notes').value.trim();
+  if (!date) { toast('Veuillez sélectionner une date.'); return; }
 
-      requestAnimationFrame(frame);
-    }
+  const results = [];
+  for (let i = 0; i < data.players.length; i++) {
+    const p = data.players[i];
+    const classement = parseFloat(document.getElementById(`r_${i}_classement`).value);
+    const pdc = parseInt(document.getElementById(`r_${i}_pdc`).value);
+    if (isNaN(classement) || isNaN(pdc)) { toast(`Veuillez remplir tous les champs pour ${p.name}.`); return; }
+    results.push({
+      player: p.name,
+      avatar: p.avatar,
+      eliminations: parseInt(document.getElementById(`r_${i}_elim`).value)||0,
+      elimCristaux: parseInt(document.getElementById(`r_${i}_elimc`).value)||0,
+      victoire: document.getElementById(`r_${i}_victoire`).checked,
+      classement,
+      pdcFin: pdc,
+      nbCartes: parseInt(document.getElementById(`r_${i}_cartes`).value)||0,
+      mvp: document.getElementById(`r_${i}_mvp`).checked,
+      lvp: document.getElementById(`r_${i}_lvp`).checked,
+    });
+  }
 
-    function showResult() {
-      const pointerAngle = 3 * Math.PI / 2;
-      const relAngle     = ((pointerAngle - currentAngle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-      const winIndex     = Math.floor(relAngle / arcSize) % numSeg;
-      const winner       = segments[winIndex];
+  data.games.push({ id: 'game-' + Date.now(), date, notes, results });
+  saveData(data);
+  toast('Partie enregistrée !');
+  document.getElementById('game-notes').value = '';
+  renderNewGameForm();
+  setTimeout(() => showPage('history'), 800);
+}
 
-      document.getElementById('resultName').textContent = winner.label.replace('\n', ' ');
-      document.getElementById('result').classList.add('visible');
-      launchHearts();
-    }
+// =========================================================
+// SETTINGS
+// =========================================================
+function renderSettings() {
+  const el = document.getElementById('players-list');
+  el.innerHTML = data.players.map((p, i) => `
+    <div class="player-tag">
+      <div class="player-dot" style="background:${p.color}"></div>
+      <span>${p.name}</span>
+      <span style="color:var(--text-muted);font-size:.75rem">· ${p.avatar}</span>
+      <button class="remove-player" onclick="removePlayer(${i})" title="Retirer">✕</button>
+    </div>
+  `).join('');
+}
 
-    canvas.addEventListener('click', spin);
+function addPlayer() {
+  const name = document.getElementById('new-player-name').value.trim();
+  const avatar = document.getElementById('new-player-avatar').value.trim();
+  if (!name) { toast('Nom requis.'); return; }
+  if (data.players.find(p => p.name === name)) { toast('Ce joueur existe déjà.'); return; }
+  const color = PLAYER_COLORS[data.players.length % PLAYER_COLORS.length];
+  data.players.push({ name, avatar: avatar || name, color });
+  saveData(data);
+  document.getElementById('new-player-name').value = '';
+  document.getElementById('new-player-avatar').value = '';
+  renderSettings();
+  toast('Joueur ajouté !');
+}
 
-    // ═══════════════════════════════════
-    //  HEARTS
-    // ═══════════════════════════════════
-    const hw      = document.getElementById('hearts');
-    const hctx    = hw.getContext('2d');
-    let hParticles = [];
-    let hAnimId    = null;
-    let hActive    = false;
+function removePlayer(i) {
+  const p = data.players[i];
+  if (!confirm(`Retirer ${p.name} ? Ses données dans les parties resteront.`)) return;
+  data.players.splice(i, 1);
+  saveData(data);
+  renderSettings();
+  toast('Joueur retiré.');
+}
 
-    function resizeHW() {
-      hw.width  = window.innerWidth;
-      hw.height = window.innerHeight;
-    }
-    resizeHW();
-    window.addEventListener('resize', resizeHW);
+// =========================================================
+// TOAST
+// =========================================================
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
 
-    const HEART_EMOJIS = ['💕','💖','💗','💓','💞','🩷','❤️','💝'];
-    const HEART_SIZES  = [14, 18, 22, 26, 30];
-
-    function spawnHeart() {
-      hParticles.push({
-        x:     hw.width * (0.05 + Math.random() * 0.90),
-        y:     hw.height + 20,
-        vy:    -(1.2 + Math.random() * 2.2),
-        vx:    (Math.random() - 0.5) * 0.8,
-        alpha: 1,
-        decay: 0.006 + Math.random() * 0.006,
-        size:  HEART_SIZES[Math.floor(Math.random() * HEART_SIZES.length)],
-        emoji: HEART_EMOJIS[Math.floor(Math.random() * HEART_EMOJIS.length)],
-        wobble: Math.random() * Math.PI * 2,
-        wobbleSpeed: 0.04 + Math.random() * 0.04,
-      });
-    }
-
-    function launchHearts() {
-      hActive    = true;
-      hParticles = [];
-      let count  = 0;
-
-      function scheduleHeart() {
-        if (!hActive || count >= 40) return;
-        count++;
-        spawnHeart();
-        setTimeout(scheduleHeart, 80 + Math.random() * 120);
-      }
-
-      scheduleHeart();
-      if (hAnimId) cancelAnimationFrame(hAnimId);
-      animateHearts();
-    }
-
-    function stopHearts() {
-      hActive    = false;
-      hParticles = [];
-      if (hAnimId) cancelAnimationFrame(hAnimId);
-      hctx.clearRect(0, 0, hw.width, hw.height);
-    }
-
-    function animateHearts() {
-      hctx.clearRect(0, 0, hw.width, hw.height);
-      hParticles = hParticles.filter(p => p.alpha > 0.02 && p.y > -40);
-
-      for (const p of hParticles) {
-        p.wobble += p.wobbleSpeed;
-        p.x      += p.vx + Math.sin(p.wobble) * 0.5;
-        p.y      += p.vy;
-        p.alpha  -= p.decay;
-
-        hctx.save();
-        hctx.globalAlpha = Math.max(0, p.alpha);
-        hctx.font        = `${p.size}px serif`;
-        hctx.textAlign   = 'center';
-        hctx.textBaseline = 'middle';
-        hctx.fillText(p.emoji, p.x, p.y);
-        hctx.restore();
-      }
-
-      if (hParticles.length > 0 || hActive) {
-        hAnimId = requestAnimationFrame(animateHearts);
-      } else {
-        hctx.clearRect(0, 0, hw.width, hw.height);
-      }
-    }
-  </script>
+// =========================================================
+// INIT
+// =========================================================
+renderDashboard();
+</script>
 </body>
 </html>
