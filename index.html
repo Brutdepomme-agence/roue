@@ -430,7 +430,53 @@
     .charts-grid { grid-template-columns: 1fr; }
     .hero-cards-grid { grid-template-columns: repeat(3, 1fr); }
     .dash-block { padding: 1rem 1rem .5rem; }
+    .wheel-container { width: min(90vw, 360px); height: min(90vw, 360px); }
   }
+
+  /* ── SPINNING WHEEL ──────────────────────────── */
+  .wheel-page { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 2rem 0; }
+  .wheel-container {
+    position: relative; width: 400px; height: 400px;
+  }
+  .wheel-pointer-wrap {
+    position: absolute; top: -28px; left: 50%; transform: translateX(-50%); z-index: 10;
+    filter: drop-shadow(0 0 8px rgba(196,27,27,.8));
+  }
+  .wheel-pointer { font-size: 2.2rem; color: var(--crimson2); line-height: 1; }
+  .wheel-outer-ring {
+    width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
+    border: 4px solid var(--border);
+    box-shadow: 0 0 0 2px rgba(196,27,27,.3), 0 0 50px rgba(196,27,27,.2), 0 0 100px rgba(124,92,252,.1);
+    position: relative;
+  }
+  #spin-wheel { width: 100%; height: 100%; }
+  #spin-wheel svg { width: 100%; height: 100%; display: block; }
+  .wheel-result {
+    font-size: 1.8rem; font-weight: 700; min-height: 3rem; text-align: center;
+    letter-spacing: .08em; transition: color .4s;
+  }
+  .btn-spin {
+    font-size: 1.05rem; padding: .9rem 2.8rem; letter-spacing: .25em;
+    text-transform: uppercase; font-weight: 700;
+    background: linear-gradient(135deg, rgba(196,27,27,.7), rgba(124,92,252,.5));
+    border: 1px solid rgba(196,27,27,.5);
+    box-shadow: 0 0 24px rgba(196,27,27,.25);
+  }
+  .btn-spin:hover { box-shadow: 0 0 36px rgba(196,27,27,.4); transform: translateY(-2px); }
+  .btn-spin:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* ── RESULT 3-STATE PICKER ───────────────────── */
+  .result-picker { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .3rem; }
+  .result-pill {
+    padding: .45rem .9rem; border-radius: 9px; cursor: pointer; font-size: .82rem;
+    font-weight: 700; border: 1px solid var(--border); color: var(--text-muted);
+    background: transparent; transition: all .18s; user-select: none;
+    font-family: inherit; letter-spacing: .05em;
+  }
+  .result-pill:hover { border-color: var(--border-bright); color: var(--text); }
+  .result-pill.rp-defeat  { background: rgba(248,113,113,.15); border-color: rgba(248,113,113,.5); color: var(--loss); }
+  .result-pill.rp-crist   { background: rgba(124,92,252,.15); border-color: rgba(124,92,252,.5); color: var(--accent2); }
+  .result-pill.rp-elim    { background: rgba(196,27,27,.18); border-color: rgba(196,27,27,.55); color: var(--crimson3); }
 
   /* ── THEME TOGGLE ────────────────────────────── */
   .theme-btn {
@@ -527,6 +573,8 @@
   [data-theme="light"] .sub-section-title::after { background: linear-gradient(90deg, var(--border), transparent); }
   [data-theme="light"] .section-title::after { background: linear-gradient(90deg, rgba(180,24,24,.18), rgba(90,40,224,.1), transparent); }
   [data-theme="light"] .avatar-hex { background: var(--surface2); }
+  [data-theme="light"] .wheel-outer-ring { border-color: var(--border); box-shadow: 0 0 0 2px rgba(180,24,24,.2), 0 0 30px rgba(180,24,24,.1); }
+  [data-theme="light"] .btn-spin { background: linear-gradient(135deg,rgba(180,24,24,.6),rgba(90,40,224,.4)); border-color: rgba(180,24,24,.4); }
   [data-theme="light"] .game-card { background: linear-gradient(145deg, var(--surface), var(--surface2)); }
   [data-theme="light"] .game-header { background: rgba(240,232,218,.7); }
   [data-theme="light"] .game-header:hover { background: rgba(232,220,204,.8); }
@@ -567,6 +615,7 @@
       <button class="active" onclick="showPage('dashboard')">Dashboard</button>
       <button onclick="showPage('history')">Historique</button>
       <button onclick="showPage('new-game')">+ Nouvelle partie</button>
+      <button onclick="showPage('wheel')">🎲 Roue</button>
       <button onclick="showPage('settings')">Joueurs</button>
     </nav>
     <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()" title="Mode clair / sombre">☀️</button>
@@ -625,6 +674,19 @@
         <button class="btn btn-primary" onclick="saveGame()">Enregistrer la partie</button>
         <button class="btn btn-secondary" onclick="resetForm()">Réinitialiser</button>
       </div>
+    </div>
+  </div>
+
+  <!-- WHEEL -->
+  <div id="page-wheel" class="page">
+    <div class="section-title">Qui commence ?</div>
+    <div class="wheel-page">
+      <div class="wheel-container">
+        <div class="wheel-pointer-wrap"><div class="wheel-pointer">▼</div></div>
+        <div class="wheel-outer-ring"><div id="spin-wheel"></div></div>
+      </div>
+      <div id="wheel-result" class="wheel-result"></div>
+      <button class="btn btn-primary btn-spin" id="btn-spin" onclick="spinWheel()">🎲 &nbsp;Tourner la roue</button>
     </div>
   </div>
 
@@ -725,11 +787,12 @@ const navBtns = document.querySelectorAll('nav button');
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  const ids = ['dashboard','history','new-game','settings'];
+  const ids = ['dashboard','history','new-game','wheel','settings'];
   navBtns.forEach((b, i) => b.classList.toggle('active', ids[i] === id));
   if (id === 'dashboard') renderDashboard();
   if (id === 'history')   renderHistory();
   if (id === 'new-game')  renderNewGameForm();
+  if (id === 'wheel')     renderWheel();
   if (id === 'settings')  renderSettings();
 }
 
@@ -1093,31 +1156,97 @@ function pickHero(playerIdx, heroName) {
 }
 
 // =========================================================
-// VICTORY TYPE
+// RESULT 3-STATE PICKER
 // =========================================================
-function toggleVictoire(i) {
-  const cb = document.getElementById(`r_${i}_victoire`);
-  const pill = document.getElementById(`pill_${i}_victoire`);
-  cb.checked = !cb.checked;
-  pill.classList.toggle('checked', cb.checked);
-  const row = document.getElementById(`victype_row_${i}`);
-  row.classList.toggle('visible', cb.checked);
-  if (!cb.checked) {
-    document.getElementById(`r_${i}_typeVictoire`).value = '';
-    document.querySelectorAll(`[data-vicplayer="${i}"]`).forEach(p => p.classList.remove('selected-crist','selected-elim'));
-  }
-}
-function setTypeVictoire(playerIdx, type) {
-  document.getElementById(`r_${playerIdx}_typeVictoire`).value = type;
-  document.querySelectorAll(`[data-vicplayer="${playerIdx}"]`).forEach(p => {
-    p.classList.remove('selected-crist','selected-elim');
-    if (p.dataset.victype === type) p.classList.add(type === 'cristallisation' ? 'selected-crist' : 'selected-elim');
+function setResult(i, type) {
+  document.getElementById(`r_${i}_result`).value = type;
+  ['defeat','crist','elim'].forEach(t => {
+    const el = document.getElementById(`rp_${i}_${t}`);
+    if (!el) return;
+    el.className = 'result-pill' + (type === t ? ` rp-${t}` : '');
   });
 }
 function togglePill(id, pillEl) {
   const cb = document.getElementById(id);
   cb.checked = !cb.checked;
   pillEl.classList.toggle('checked', cb.checked);
+}
+
+// =========================================================
+// SPINNING WHEEL
+// =========================================================
+let _wheelRot = 0, _wheelSpinning = false;
+
+function renderWheel() {
+  const players = data.players;
+  const n = players.length;
+  if (!n) { document.getElementById('spin-wheel').innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem">Aucun joueur configuré</p>'; return; }
+  const cx = 200, cy = 200, r = 198;
+  const textR = 130;
+  const sector = 360 / n;
+  let paths = '';
+  for (let i = 0; i < n; i++) {
+    const s = i * sector, e = (i + 1) * sector;
+    const sRad = (s - 90) * Math.PI / 180, eRad = (e - 90) * Math.PI / 180;
+    const x1 = cx + r * Math.cos(sRad), y1 = cy + r * Math.sin(sRad);
+    const x2 = cx + r * Math.cos(eRad), y2 = cy + r * Math.sin(eRad);
+    const la = sector > 180 ? 1 : 0;
+    const midRad = ((s + e) / 2 - 90) * Math.PI / 180;
+    const tx = cx + textR * Math.cos(midRad), ty = cy + textR * Math.sin(midRad);
+    const rot = (s + e) / 2;
+    const c = players[i].color;
+    // Sector fill with slight radial gradient effect via two paths
+    paths += `<path d="M${cx},${cy}L${x1},${y1}A${r},${r},0,${la},1,${x2},${y2}Z" fill="${c}" opacity=".9" stroke="rgba(4,4,14,.6)" stroke-width="2"/>`;
+    paths += `<text x="${tx}" y="${ty}" transform="rotate(${rot},${tx},${ty})" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="19" font-weight="700" font-family="Rajdhani,Arial" style="text-shadow:0 1px 4px rgba(0,0,0,.9)">${players[i].name}</text>`;
+  }
+  // Decorative rings + center pin
+  paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(196,27,27,.4)" stroke-width="3"/>`;
+  paths += `<circle cx="${cx}" cy="${cy}" r="28" fill="rgba(4,4,14,.95)" stroke="rgba(196,27,27,.8)" stroke-width="3"/>`;
+  paths += `<circle cx="${cx}" cy="${cy}" r="11" fill="#dc2626"/>`;
+  paths += `<circle cx="${cx}" cy="${cy}" r="5" fill="#fca5a5"/>`;
+  document.getElementById('spin-wheel').innerHTML =
+    `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
+  // Reset
+  _wheelRot = 0;
+  const el = document.getElementById('spin-wheel');
+  el.style.transition = 'none';
+  el.style.transform = 'rotate(0deg)';
+  document.getElementById('wheel-result').innerHTML = '';
+  const btn = document.getElementById('btn-spin');
+  if (btn) { btn.disabled = false; }
+}
+
+function spinWheel() {
+  if (_wheelSpinning) return;
+  const players = data.players;
+  const n = players.length;
+  if (!n) return;
+  _wheelSpinning = true;
+  const btn = document.getElementById('btn-spin');
+  if (btn) btn.disabled = true;
+
+  const sector = 360 / n;
+  const winner = Math.floor(Math.random() * n);
+  // Place winner's sector center at top (pointer = top = 0°)
+  const winnerCenter = winner * sector + sector / 2;
+  const alignAngle = (360 - winnerCenter % 360) % 360;
+  const spins = 5 + Math.floor(Math.random() * 4); // 5–8 turns
+  _wheelRot = _wheelRot + spins * 360 + alignAngle;
+
+  const el = document.getElementById('spin-wheel');
+  el.style.transition = 'transform 4.8s cubic-bezier(0.17,0.67,0.12,0.99)';
+  el.style.transform = `rotate(${_wheelRot}deg)`;
+
+  document.getElementById('wheel-result').innerHTML = '🎲&nbsp;&nbsp;…';
+  document.getElementById('wheel-result').style.color = 'var(--text-muted)';
+
+  setTimeout(() => {
+    _wheelSpinning = false;
+    if (btn) btn.disabled = false;
+    const p = players[winner];
+    document.getElementById('wheel-result').innerHTML =
+      `<span style="color:${p.color}">◆ ${p.name} commence !</span>`;
+  }, 5000);
 }
 
 // =========================================================
@@ -1144,22 +1273,22 @@ function renderNewGameForm() {
       </div>
 
       <div class="form-grid">
-        <div class="field"><label>Position finale (1 = 1er ↑ mieux)</label>${stepperHTML(`r_${i}_classement`, '', 0.5, 1, 10, false)}</div>
-        <div class="field"><label>Concentration de fin</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 999, true)}</div>
+        <div class="field"><label>Position finale (1 = 1er ↑ mieux)</label>${stepperHTML(`r_${i}_classement`, '1', 1, 1, 5, false)}</div>
+        <div class="field"><label>Concentration de fin</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 5, true)}</div>
         <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`r_${i}_cartes`, '0', 1, 0, 99, false)}</div>
         <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`r_${i}_elim`, '0', 1, 0, 99, false)}</div>
-        <div class="field"><label>Éliminations 💎 cristaux</label>${stepperHTML(`r_${i}_elimc`, '0', 1, 0, 99, false)}</div>
         <div class="field">
-          <label>Résultats</label>
+          <label>Résultat</label>
+          <div class="result-picker">
+            <div class="result-pill rp-defeat" id="rp_${i}_defeat" onclick="setResult(${i},'defeat')">💀 Défaite</div>
+            <div class="result-pill" id="rp_${i}_crist" onclick="setResult(${i},'crist')">💎 Victoire cristaux</div>
+            <div class="result-pill" id="rp_${i}_elim"  onclick="setResult(${i},'elim')">⚔️ Victoire élim.</div>
+          </div>
+          <input type="hidden" id="r_${i}_result" value="defeat">
+        </div>
+        <div class="field">
+          <label>Distinctions</label>
           <div class="checks-col">
-            <div class="check-pill" id="pill_${i}_victoire" onclick="toggleVictoire(${i})">
-              <input type="checkbox" id="r_${i}_victoire"><span class="pill-dot"></span>Victoire 🏆
-            </div>
-            <div class="vic-type-row" id="victype_row_${i}">
-              <div class="vic-type-pill" data-vicplayer="${i}" data-victype="cristallisation" onclick="setTypeVictoire(${i},'cristallisation')">💎 Cristallisation</div>
-              <div class="vic-type-pill" data-vicplayer="${i}" data-victype="elimination" onclick="setTypeVictoire(${i},'elimination')">⚔️ Élimination</div>
-            </div>
-            <input type="hidden" id="r_${i}_typeVictoire" value="">
             <div class="check-pill" id="pill_${i}_mvp" onclick="togglePill('r_${i}_mvp', this)">
               <input type="checkbox" id="r_${i}_mvp"><span class="pill-dot"></span>MVP ⭐
             </div>
@@ -1185,13 +1314,15 @@ function saveGame() {
     const classement = parseFloat(document.getElementById(`r_${i}_classement`).value);
     const pdc = parseInt(document.getElementById(`r_${i}_pdc`).value);
     if (isNaN(classement) || isNaN(pdc)) { toast(`Remplir position et Pdc pour ${p.name}.`); return; }
+    const resultType = document.getElementById(`r_${i}_result`).value; // 'defeat'|'crist'|'elim'
+    const victoire = resultType !== 'defeat';
+    const typeVictoire = resultType === 'crist' ? 'cristallisation' : resultType === 'elim' ? 'elimination' : null;
     results.push({
       player: p.name,
       hero: document.getElementById(`r_${i}_hero`).value || null,
       eliminations: parseInt(document.getElementById(`r_${i}_elim`).value)||0,
-      elimCristaux: parseInt(document.getElementById(`r_${i}_elimc`).value)||0,
-      victoire: document.getElementById(`r_${i}_victoire`).checked,
-      typeVictoire: document.getElementById(`r_${i}_typeVictoire`).value || null,
+      elimCristaux: 0,
+      victoire, typeVictoire,
       classement, pdcFin: pdc,
       nbCartes: parseInt(document.getElementById(`r_${i}_cartes`).value)||0,
       mvp: document.getElementById(`r_${i}_mvp`).checked,
