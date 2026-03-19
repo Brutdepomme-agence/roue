@@ -162,8 +162,28 @@
   }
   .player-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--player-color), transparent); }
   .player-card::after { content: ''; position: absolute; top: 3px; right: 1rem; width: 40px; height: 40px; background: var(--player-color); clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); opacity: .07; }
-  .player-card .player-name { font-size: 1.05rem; font-weight: 700; }
-  .player-card .player-fav-hero { font-size: .72rem; color: var(--text-muted); margin-bottom: .9rem; letter-spacing: .1em; text-transform: uppercase; }
+  /* ── PLAYER AVATARS ──────────────────────────── */
+  .player-header { display: flex; align-items: center; gap: .9rem; margin-bottom: 1.1rem; }
+  .avatar-wrap { position: relative; flex-shrink: 0; width: 64px; height: 72px; }
+  .avatar-hex-border {
+    position: absolute; inset: 0;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: var(--hero-color, var(--player-color));
+    filter: blur(0px);
+  }
+  .avatar-hex {
+    position: absolute; inset: 2.5px;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    overflow: hidden;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .avatar-photo { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; display: block; }
+  .avatar-tint { position: absolute; inset: 0; background: var(--hero-color, transparent); mix-blend-mode: color; opacity: .5; pointer-events: none; }
+  .avatar-init { font-size: 1.7rem; font-weight: 800; color: var(--hero-color, var(--player-color)); user-select: none; }
+  .player-info { flex: 1; min-width: 0; }
+  .player-card .player-name { font-size: 1.1rem; font-weight: 700; margin-bottom: .15rem; }
+  .player-badges-inline { display: flex; flex-wrap: wrap; gap: .2rem; margin-top: .25rem; }
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: .28rem 0; border-bottom: 1px solid rgba(42,42,80,.5); }
   .stat-row:last-child { border-bottom: none; }
   .stat-label { font-size: .78rem; color: var(--text-muted); }
@@ -512,6 +532,8 @@
 // CONSTANTS
 // =========================================================
 const PLAYER_COLORS = ['#7c5cfc','#38bdf8','#4ade80','#fb923c','#f472b6','#a78bfa','#fbbf24','#34d399'];
+// Photos par joueur (null = placeholder avec initiale)
+const PLAYER_PHOTOS = { 'Ben': 'ben.png' };
 
 const HEROES = [
   { name: 'Rez',        color: '#f43f5e', emoji: '🔴',
@@ -712,16 +734,29 @@ function renderDashboard() {
       s.lvp > 0 ? `<span class="badge badge-lvp">💀 LVP ×${s.lvp}</span>` : '',
       s.wins > 0 ? `<span class="badge badge-win">🏆 ×${s.wins}</span>` : '',
     ].filter(Boolean).join('');
+    // Avatar
+    const heroColor = hd ? hd.color : p.color;
+    const photo = PLAYER_PHOTOS[p.name];
+    const init = p.name.charAt(0).toUpperCase();
+    const avatarInner = photo
+      ? `<img class="avatar-photo" src="${photo}" alt="${p.name}" onerror="this.style.display='none';document.createElement('span')"><div class="avatar-tint"></div>`
+      : `<span class="avatar-init">${init}</span>`;
+    const avatarHTML = `<div class="avatar-wrap" style="--hero-color:${heroColor}"><div class="avatar-hex-border"></div><div class="avatar-hex">${avatarInner}</div></div>`;
     return `<div class="player-card" style="--player-color:${p.color}">
-      <div class="player-name">${p.name}</div>
-      <div class="player-fav-hero">${hd ? `<span style="color:${hd.color}">${hd.name}</span>` : '—'}</div>
+      <div class="player-header">
+        ${avatarHTML}
+        <div class="player-info">
+          <div class="player-name">${p.name}</div>
+          ${badges ? `<div class="player-badges-inline">${badges}</div>` : ''}
+        </div>
+      </div>
       <div class="stat-row"><span class="stat-label">Parties</span><span class="stat-val">${games}</span></div>
+      <div class="stat-row"><span class="stat-label">Héros le + joué</span><span class="stat-val" style="color:${heroColor}">${hd ? hd.name : '—'}</span></div>
       <div class="stat-row"><span class="stat-label">Victoires</span><span class="stat-val" style="color:var(--win)">${s.wins||0} <span style="color:var(--text-muted);font-size:.75rem">(${winRate}%)</span></span></div>
       <div class="stat-row"><span class="stat-label">Classement moy.</span><span class="stat-val">${avgRank}</span></div>
       <div class="stat-row"><span class="stat-label">Concentration moy.</span><span class="stat-val">${avgPdc}</span></div>
       <div class="stat-row"><span class="stat-label">Éliminations</span><span class="stat-val">${s.totalElim||0} <span style="color:var(--text-muted);font-size:.75rem">+${s.totalElimC||0}💎</span></span></div>
-      ${s.cristallisation||s.elimination ? `<div class="stat-row"><span class="stat-label">Victoires</span><span class="stat-val"><span style="color:var(--accent2)">💎${s.cristallisation||0}</span> <span style="color:var(--loss)">⚔️${s.elimination||0}</span></span></div>` : ''}
-      ${badges ? `<div class="badges-row">${badges}</div>` : ''}
+      ${s.cristallisation||s.elimination ? `<div class="stat-row"><span class="stat-label">Types victoires</span><span class="stat-val"><span style="color:var(--accent2)">💎${s.cristallisation||0}</span> <span style="color:var(--loss)">⚔️${s.elimination||0}</span></span></div>` : ''}
     </div>`;
   }).join('');
 
