@@ -313,11 +313,51 @@
   .empty { text-align: center; padding: 3rem; color: var(--text-muted); }
   .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .5; }
 
+  /* ── DASH BLOCKS (grouped sections) ─────────── */
+  .dash-block {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.6rem 1.6rem 1rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(160deg, rgba(28,28,50,.55), rgba(10,10,20,.45));
+  }
+  .dash-block::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent 5%, var(--block-accent, var(--accent)) 50%, transparent 95%);
+  }
+  .dash-block--player {
+    --block-accent: #a78bfa;
+    box-shadow: 0 0 40px rgba(124,92,252,.04) inset;
+  }
+  .dash-block--hero {
+    --block-accent: #f59e0b;
+    border-color: rgba(245,158,11,.18);
+    box-shadow: 0 0 40px rgba(245,158,11,.04) inset;
+  }
+  .dash-block .section-title { margin-top: 0; }
+  .dash-block .section-title::before { color: var(--block-accent, var(--accent2)); }
+
+  /* ── SUB-SECTION DIVIDER ─────────────────────── */
+  .sub-section-title {
+    font-size: .76rem; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .18em;
+    margin: 1.6rem 0 1rem;
+    display: flex; align-items: center; gap: .7rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(42,42,80,.5);
+  }
+  .sub-section-title::before { content: '◈'; font-size: .52rem; opacity: .5; }
+  .sub-section-title::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(42,42,80,.5), transparent); }
+
   @media (max-width: 640px) {
     header { padding: .8rem 1rem; flex-direction: column; gap: .6rem; }
     main { padding: 1rem; }
     .charts-grid { grid-template-columns: 1fr; }
     .hero-cards-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .dash-block { padding: 1rem 1rem .5rem; }
   }
 </style>
 </head>
@@ -348,21 +388,29 @@
     <div id="summary-tiles" class="summary-grid"></div>
     <div class="section-title">Classement général</div>
     <div id="leaderboard" class="leaderboard"></div>
-    <div class="section-title">Stats par joueur</div>
-    <div id="player-cards" class="player-grid"></div>
-    <div class="section-title">Héros</div>
-    <div id="hero-cards-dash" class="hero-cards-grid"></div>
-    <div class="section-title">Comparaisons joueurs</div>
-    <div class="charts-grid">
-      <div class="chart-card"><h3>Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
-      <div class="chart-card"><h3>Classement moyen <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
-      <div class="chart-card"><h3>Concentration (moy.)</h3><div class="chart-wrap"><canvas id="chart-pdc"></canvas></div></div>
-      <div class="chart-card"><h3>Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
+
+    <!-- ── JOUEURS ───────────────────────────────── -->
+    <div class="dash-block dash-block--player">
+      <div class="section-title">Stats par joueur</div>
+      <div id="player-cards" class="player-grid"></div>
+      <div class="sub-section-title">Comparaisons joueurs</div>
+      <div class="charts-grid">
+        <div class="chart-card"><h3>Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
+        <div class="chart-card"><h3>Classement moyen <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
+        <div class="chart-card"><h3>Concentration (moy.)</h3><div class="chart-wrap"><canvas id="chart-pdc"></canvas></div></div>
+        <div class="chart-card"><h3>Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
+      </div>
     </div>
-    <div class="section-title">Comparaisons héros</div>
-    <div class="charts-grid">
-      <div class="chart-card"><h3>Winrate par héros (%)</h3><div class="chart-wrap"><canvas id="chart-hero-winrate"></canvas></div></div>
-      <div class="chart-card"><h3>Classement moyen héros <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-hero-rank"></canvas></div></div>
+
+    <!-- ── HÉROS ──────────────────────────────────── -->
+    <div class="dash-block dash-block--hero">
+      <div class="section-title">Héros</div>
+      <div id="hero-cards-dash" class="hero-cards-grid"></div>
+      <div class="sub-section-title">Comparaisons héros</div>
+      <div class="charts-grid">
+        <div class="chart-card"><h3>Winrate par héros (%)</h3><div class="chart-wrap"><canvas id="chart-hero-winrate"></canvas></div></div>
+        <div class="chart-card"><h3>Classement moyen héros <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-hero-rank"></canvas></div></div>
+      </div>
     </div>
   </div>
 
