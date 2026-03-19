@@ -351,11 +351,13 @@
     <div id="leaderboard" class="leaderboard"></div>
     <div class="section-title">Stats par joueur</div>
     <div id="player-cards" class="player-grid"></div>
+    <div class="section-title">Héros</div>
+    <div id="hero-cards-dash" class="hero-cards-grid"></div>
     <div class="section-title">Comparaisons</div>
     <div class="charts-grid">
       <div class="chart-card"><h3>Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
-      <div class="chart-card"><h3>Classement moyen <em>↓ mieux</em></h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
-      <div class="chart-card"><h3>Pdc fin de partie (moy.)</h3><div class="chart-wrap"><canvas id="chart-pdc"></canvas></div></div>
+      <div class="chart-card"><h3>Classement moyen <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
+      <div class="chart-card"><h3>Concentration (moy.)</h3><div class="chart-wrap"><canvas id="chart-pdc"></canvas></div></div>
       <div class="chart-card"><h3>Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
     </div>
   </div>
@@ -622,24 +624,32 @@ function renderDashboard() {
       <div class="stat-row"><span class="stat-label">Parties</span><span class="stat-val">${games}</span></div>
       <div class="stat-row"><span class="stat-label">Victoires</span><span class="stat-val" style="color:var(--win)">${s.wins||0} <span style="color:var(--text-muted);font-size:.75rem">(${winRate}%)</span></span></div>
       <div class="stat-row"><span class="stat-label">Classement moy.</span><span class="stat-val">${avgRank}</span></div>
-      <div class="stat-row"><span class="stat-label">Pdc moyen</span><span class="stat-val">${avgPdc}</span></div>
+      <div class="stat-row"><span class="stat-label">Concentration moy.</span><span class="stat-val">${avgPdc}</span></div>
       <div class="stat-row"><span class="stat-label">Éliminations</span><span class="stat-val">${s.totalElim||0} <span style="color:var(--text-muted);font-size:.75rem">+${s.totalElimC||0}💎</span></span></div>
       ${s.cristallisation||s.elimination ? `<div class="stat-row"><span class="stat-label">Victoires</span><span class="stat-val"><span style="color:var(--accent2)">💎${s.cristallisation||0}</span> <span style="color:var(--loss)">⚔️${s.elimination||0}</span></span></div>` : ''}
       ${badges ? `<div class="badges-row">${badges}</div>` : ''}
     </div>`;
   }).join('');
 
+  // Hero cards on dashboard
+  document.getElementById('hero-cards-dash').innerHTML = heroCardsHTML();
+
   // Charts
   const names = ranked.map(p => p.name);
   const colors = ranked.map(p => p.color);
+  const nPlayers = data.players.length || 4;
+
   mkChart('chart-wins', 'bar', names, [{
     data: names.map(n => stats[n]?.wins||0),
     backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
   }]);
+
+  // Classement : inverted so rank 1 = tallest bar (nPlayers + 1 - avgRank)
   mkChart('chart-rank', 'bar', names, [{
-    data: names.map(n => stats[n]?.games ? (stats[n].totalRank/stats[n].games).toFixed(2) : 0),
+    data: names.map(n => stats[n]?.games ? parseFloat((nPlayers + 1 - stats[n].totalRank/stats[n].games).toFixed(2)) : 0),
     backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
-  }]);
+  }], { y: { max: nPlayers + 0.5 }, extra: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Classement moy. : #${(nPlayers + 1 - ctx.parsed.y).toFixed(1)}` } } } } });
+
   mkChart('chart-pdc', 'bar', names, [{
     data: names.map(n => stats[n]?.games ? Math.round(stats[n].totalPdc/stats[n].games) : 0),
     backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
@@ -659,8 +669,43 @@ function renderDashboard() {
 }
 
 // =========================================================
-// HEROES PAGE
+// HEROES — shared card builder + page renderer
 // =========================================================
+function heroCardsHTML() {
+  const hStats = aggHeroStats();
+  const sorted = HEROES.slice().sort((a,b) => {
+    const wa = hStats[a.name]?.games ? hStats[a.name].wins/hStats[a.name].games : -1;
+    const wb = hStats[b.name]?.games ? hStats[b.name].wins/hStats[b.name].games : -1;
+    return wb - wa;
+  });
+  return sorted.map(h => {
+    const s = hStats[h.name] || { games:0, wins:0, totalRank:0 };
+    const winrate = s.games ? Math.round(s.wins/s.games*100) : null;
+    const avgRank = s.games ? (s.totalRank/s.games).toFixed(1) : null;
+    const hasData = s.games > 0;
+    return `<div class="hero-card" style="--hero-color:${h.color}">
+      <div class="hero-img-wrap">
+        ${h.img ? `<img src="${h.img}" alt="${h.name}" onerror="this.parentNode.innerHTML='<div class=hero-img-placeholder>${h.emoji}</div>'">` : `<div class="hero-img-placeholder">${h.emoji}</div>`}
+        ${hasData ? `<div class="hero-gem-badge">${winrate}% win</div>` : ''}
+      </div>
+      <div class="hero-info">
+        <div class="hero-name">${h.name}</div>
+        ${hasData ? `
+          <div class="hero-winrate-big" style="color:${h.color}">${winrate}<span style="font-size:.9rem;font-weight:400">%</span></div>
+          <div class="win-bar-wrap"><div class="win-bar-fill" style="width:${winrate}%"></div></div>
+          <div class="hero-stat-row"><span>Parties</span><span>${s.games}</span></div>
+          <div class="hero-stat-row"><span>Victoires</span><span>${s.wins}</span></div>
+          <div class="hero-stat-row"><span>Classement moy.</span><span>#${avgRank}</span></div>
+          ${s.cristallisation||s.elimination ? `<div class="hero-vic-types">
+            ${s.cristallisation ? `<span class="vic-badge vic-badge-crist">💎 ×${s.cristallisation}</span>` : ''}
+            ${s.elimination ? `<span class="vic-badge vic-badge-elim">⚔️ ×${s.elimination}</span>` : ''}
+          </div>` : ''}
+        ` : '<div style="font-size:.75rem;color:var(--text-muted);margin-top:.3rem">Aucune partie</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderHeroes() {
   const hStats = aggHeroStats();
   const sorted = HEROES.slice().sort((a,b) => {
@@ -728,7 +773,7 @@ function renderHistory() {
           <span class="hero-pill" style="color:${hd.color};border-color:${hd.color}33">${hd.emoji} ${hd.name}</span>
         </td>
         <td class="${rankClass}">#${r.classement}</td>
-        <td>${r.pdcFin} pdc</td>
+        <td>${r.pdcFin}</td>
         <td>${r.eliminations}${r.elimCristaux > 0 ? ` +${r.elimCristaux}💎` : ''}</td>
         <td>${r.nbCartes||'-'} cartes</td>
         <td>${r.mvp?'<span class="badge badge-mvp">MVP</span>':''}${r.lvp?'<span class="badge badge-lvp">LVP</span>':''}${r.victoire?`<span class="badge badge-win">Victoire</span>${vicBadge}`:''}</td>
@@ -748,7 +793,7 @@ function renderHistory() {
       </div>
       <div class="game-body">
         <table class="game-table">
-          <tr><th>Joueur & Héros</th><th>Classement</th><th>Points</th><th>Éliminations</th><th>Deck</th><th>Résultat</th></tr>
+          <tr><th>Joueur & Héros</th><th>Classement</th><th>Concentration</th><th>Éliminations</th><th>Deck</th><th>Résultat</th></tr>
           ${rows}
         </table>
       </div>
@@ -862,7 +907,7 @@ function renderNewGameForm() {
 
       <div class="form-grid">
         <div class="field"><label>Position finale (1 = 1er ↑ mieux)</label>${stepperHTML(`r_${i}_classement`, '', 0.5, 1, 10, false)}</div>
-        <div class="field"><label>Pdc fin de partie</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 999, true)}</div>
+        <div class="field"><label>Concentration de fin</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 999, true)}</div>
         <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`r_${i}_cartes`, '0', 1, 0, 99, false)}</div>
         <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`r_${i}_elim`, '0', 1, 0, 99, false)}</div>
         <div class="field"><label>Éliminations 💎 cristaux</label>${stepperHTML(`r_${i}_elimc`, '0', 1, 0, 99, false)}</div>
