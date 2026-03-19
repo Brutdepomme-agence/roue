@@ -335,7 +335,6 @@
   </div>
   <nav>
     <button class="active" onclick="showPage('dashboard')">Dashboard</button>
-    <button onclick="showPage('heroes')">Héros</button>
     <button onclick="showPage('history')">Historique</button>
     <button onclick="showPage('new-game')">+ Nouvelle partie</button>
     <button onclick="showPage('settings')">Joueurs</button>
@@ -353,23 +352,17 @@
     <div id="player-cards" class="player-grid"></div>
     <div class="section-title">Héros</div>
     <div id="hero-cards-dash" class="hero-cards-grid"></div>
-    <div class="section-title">Comparaisons</div>
+    <div class="section-title">Comparaisons joueurs</div>
     <div class="charts-grid">
       <div class="chart-card"><h3>Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
       <div class="chart-card"><h3>Classement moyen <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
       <div class="chart-card"><h3>Concentration (moy.)</h3><div class="chart-wrap"><canvas id="chart-pdc"></canvas></div></div>
       <div class="chart-card"><h3>Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
     </div>
-  </div>
-
-  <!-- HÉROS -->
-  <div id="page-heroes" class="page">
-    <div class="section-title">Statistiques des héros</div>
-    <div id="hero-cards" class="hero-cards-grid"></div>
-    <div class="section-title">Comparaisons</div>
+    <div class="section-title">Comparaisons héros</div>
     <div class="charts-grid">
       <div class="chart-card"><h3>Winrate par héros (%)</h3><div class="chart-wrap"><canvas id="chart-hero-winrate"></canvas></div></div>
-      <div class="chart-card"><h3>Classement moyen <em>↓ mieux</em></h3><div class="chart-wrap"><canvas id="chart-hero-rank"></canvas></div></div>
+      <div class="chart-card"><h3>Classement moyen héros <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-hero-rank"></canvas></div></div>
     </div>
   </div>
 
@@ -469,10 +462,9 @@ const navBtns = document.querySelectorAll('nav button');
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  const ids = ['dashboard','heroes','history','new-game','settings'];
+  const ids = ['dashboard','history','new-game','settings'];
   navBtns.forEach((b, i) => b.classList.toggle('active', ids[i] === id));
   if (id === 'dashboard') renderDashboard();
-  if (id === 'heroes')    renderHeroes();
   if (id === 'history')   renderHistory();
   if (id === 'new-game')  renderNewGameForm();
   if (id === 'settings')  renderSettings();
@@ -631,8 +623,25 @@ function renderDashboard() {
     </div>`;
   }).join('');
 
-  // Hero cards on dashboard
+  // Hero cards + charts on dashboard
   document.getElementById('hero-cards-dash').innerHTML = heroCardsHTML();
+  const hStats2 = aggHeroStats();
+  const sortedHeroes = HEROES.slice().sort((a,b) => {
+    const wa = hStats2[a.name]?.games ? hStats2[a.name].wins/hStats2[a.name].games : -1;
+    const wb = hStats2[b.name]?.games ? hStats2[b.name].wins/hStats2[b.name].games : -1;
+    return wb - wa;
+  });
+  const hNames = sortedHeroes.map(h => h.name);
+  const hColors = sortedHeroes.map(h => h.color);
+  const nH = data.players.length || 4;
+  mkChart('chart-hero-winrate', 'bar', hNames, [{
+    data: sortedHeroes.map(h => hStats2[h.name]?.games ? Math.round(hStats2[h.name].wins/hStats2[h.name].games*100) : 0),
+    backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
+  }], { y: { max: 100 } });
+  mkChart('chart-hero-rank', 'bar', hNames, [{
+    data: sortedHeroes.map(h => hStats2[h.name]?.games ? parseFloat((nH + 1 - hStats2[h.name].totalRank/hStats2[h.name].games).toFixed(2)) : 0),
+    backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
+  }], { y: { max: nH + 0.5 }, extra: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Classement moy. : #${(nH + 1 - ctx.parsed.y).toFixed(1)}` } } } } });
 
   // Charts
   const names = ranked.map(p => p.name);
@@ -706,53 +715,6 @@ function heroCardsHTML() {
   }).join('');
 }
 
-function renderHeroes() {
-  const hStats = aggHeroStats();
-  const sorted = HEROES.slice().sort((a,b) => {
-    const wa = hStats[a.name]?.games ? hStats[a.name].wins/hStats[a.name].games : -1;
-    const wb = hStats[b.name]?.games ? hStats[b.name].wins/hStats[b.name].games : -1;
-    return wb - wa;
-  });
-
-  document.getElementById('hero-cards').innerHTML = sorted.map(h => {
-    const s = hStats[h.name] || { games:0, wins:0, totalRank:0 };
-    const winrate = s.games ? Math.round(s.wins/s.games*100) : null;
-    const avgRank = s.games ? (s.totalRank/s.games).toFixed(1) : null;
-    const hasData = s.games > 0;
-    return `<div class="hero-card" style="--hero-color:${h.color}">
-      <div class="hero-img-wrap">
-        ${h.img ? `<img src="${h.img}" alt="${h.name}" onerror="this.parentNode.innerHTML='<div class=hero-img-placeholder>${h.emoji}</div>'">` : `<div class="hero-img-placeholder">${h.emoji}</div>`}
-        ${hasData ? `<div class="hero-gem-badge">${winrate}% win</div>` : ''}
-      </div>
-      <div class="hero-info">
-        <div class="hero-name">${h.name}</div>
-        ${hasData ? `
-          <div class="hero-winrate-big" style="color:${h.color}">${winrate}<span style="font-size:.9rem;font-weight:400">%</span></div>
-          <div class="win-bar-wrap"><div class="win-bar-fill" style="width:${winrate}%"></div></div>
-          <div class="hero-stat-row"><span>Parties</span><span>${s.games}</span></div>
-          <div class="hero-stat-row"><span>Victoires</span><span>${s.wins}</span></div>
-          <div class="hero-stat-row"><span>Classement moy.</span><span>#${avgRank}</span></div>
-          ${s.cristallisation||s.elimination ? `<div class="hero-vic-types">
-            ${s.cristallisation ? `<span class="vic-badge vic-badge-crist">💎 ×${s.cristallisation}</span>` : ''}
-            ${s.elimination ? `<span class="vic-badge vic-badge-elim">⚔️ ×${s.elimination}</span>` : ''}
-          </div>` : ''}
-        ` : '<div style="font-size:.75rem;color:var(--text-muted);margin-top:.3rem">Aucune partie</div>'}
-      </div>
-    </div>`;
-  }).join('');
-
-  // Hero charts
-  const hNames = sorted.map(h => h.name);
-  const hColors = sorted.map(h => h.color);
-  mkChart('chart-hero-winrate', 'bar', hNames, [{
-    data: sorted.map(h => hStats[h.name]?.games ? Math.round(hStats[h.name].wins/hStats[h.name].games*100) : 0),
-    backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
-  }], { y: { max: 100 } });
-  mkChart('chart-hero-rank', 'bar', hNames, [{
-    data: sorted.map(h => hStats[h.name]?.games ? parseFloat((hStats[h.name].totalRank/hStats[h.name].games).toFixed(2)) : 0),
-    backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
-  }]);
-}
 
 // =========================================================
 // HISTORY
