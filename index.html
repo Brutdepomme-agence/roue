@@ -551,14 +551,34 @@ function renderDashboard() {
 
   // Summary
   const topRanked = ranked[0];
-  const totalWins = data.games.reduce((a,g) => a + g.results.filter(r=>r.victoire).length, 0);
-  const crist = data.games.reduce((a,g) => a + g.results.filter(r=>r.typeVictoire==='cristallisation').length, 0);
-  const elim  = data.games.reduce((a,g) => a + g.results.filter(r=>r.typeVictoire==='elimination').length, 0);
+
+  // Best hero by winrate (min 1 game)
+  const hStats = aggHeroStats();
+  const bestHero = HEROES.filter(h => hStats[h.name]?.games > 0)
+    .sort((a,b) => (hStats[b.name].wins/hStats[b.name].games) - (hStats[a.name].wins/hStats[a.name].games))[0];
+  const bestHeroRate = bestHero ? Math.round(hStats[bestHero.name].wins/hStats[bestHero.name].games*100) : null;
+
+  // Best player by wins
+  const bestPlayer = players.slice().filter(p => stats[p.name]?.games)
+    .sort((a,b) => (stats[b.name]?.wins||0) - (stats[a.name]?.wins||0))[0];
+
   document.getElementById('summary-tiles').innerHTML = `
-    <div class="summary-tile"><div class="s-val">${totalGames}</div><div class="s-label">Parties jouées</div></div>
-    <div class="summary-tile"><div class="s-val" style="color:${topRanked?.color||'#fff'}">${topRanked?.name||'-'}</div><div class="s-label">Leader classement</div></div>
-    <div class="summary-tile"><div class="s-val" style="color:var(--accent2)">${crist}</div><div class="s-label">💎 Cristallisations</div></div>
-    <div class="summary-tile"><div class="s-val" style="color:var(--loss)">${elim}</div><div class="s-label">⚔️ Éliminations</div></div>
+    <div class="summary-tile">
+      <div class="s-val">${totalGames}</div>
+      <div class="s-label">Parties jouées</div>
+    </div>
+    <div class="summary-tile">
+      <div class="s-val" style="color:${bestHero ? heroData(bestHero.name).color : 'var(--accent2)'}">
+        ${bestHero ? bestHero.name : '—'}
+      </div>
+      <div class="s-label">Meilleur héros${bestHeroRate != null ? ` · ${bestHeroRate}% win` : ''}</div>
+    </div>
+    <div class="summary-tile">
+      <div class="s-val" style="color:${bestPlayer?.color||'#fff'}">
+        ${bestPlayer?.name||'—'}
+      </div>
+      <div class="s-label">Meilleur joueur${bestPlayer ? ` · ${stats[bestPlayer.name].wins} 🏆` : ''}</div>
+    </div>
   `;
 
   // Leaderboard (sorted by avg rank, lower = better)
