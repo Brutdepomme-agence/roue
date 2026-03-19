@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shards — Stats</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('shards-theme')||'dark')})();</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
 
@@ -430,6 +431,115 @@
     .hero-cards-grid { grid-template-columns: repeat(3, 1fr); }
     .dash-block { padding: 1rem 1rem .5rem; }
   }
+
+  /* ── THEME TOGGLE ────────────────────────────── */
+  .theme-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--text);
+    padding: .38rem .55rem; border-radius: 8px; cursor: pointer; font-size: .9rem;
+    transition: all .2s; flex-shrink: 0; line-height: 1;
+  }
+  .theme-btn:hover { border-color: var(--crimson2); transform: scale(1.1); }
+
+  /* ── LIGHT MODE ──────────────────────────────── */
+  /* Boîte Shards : parchemin chaud, rouge carmin, violet/chrome */
+  :root[data-theme="light"] {
+    --bg: #efe4cc;
+    --surface: #fdf8ee;
+    --surface2: #f5ecda;
+    --border: #ddc9a4;
+    --border-bright: #c4a268;
+    --accent: #5a28e0;
+    --accent2: #7040d0;
+    --accent3: #5828c0;
+    --crimson: #b81818;
+    --crimson2: #d01e1e;
+    --crimson3: #b83030;
+    --text: #1a0e06;
+    --text-muted: #7a6040;
+    --win: #166534;
+    --loss: #991b1b;
+    --gold: #92400e;
+  }
+  [data-theme="light"] body {
+    background-image:
+      radial-gradient(ellipse at 8% 0%, rgba(180,24,24,.07) 0%, transparent 45%),
+      radial-gradient(ellipse at 92% 8%, rgba(90,40,224,.05) 0%, transparent 40%),
+      radial-gradient(ellipse at 85% 100%, rgba(90,40,224,.04) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 462' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='200,1 399,116 399,346 200,461 1,346 1,116' fill='rgba(180,24,24,0.04)' stroke='rgba(180,24,24,0.1)' stroke-width='1.5'/%3E%3Cpolygon points='200,71 339,151 339,311 200,391 61,311 61,151' fill='none' stroke='rgba(180,24,24,0.05)' stroke-width='1'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 300 346' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='150,1 299,87 299,259 150,345 1,259 1,87' fill='rgba(90,40,224,0.04)' stroke='rgba(90,40,224,0.1)' stroke-width='1.5'/%3E%3Cpolygon points='150,53 254,113 254,233 150,293 46,233 46,113' fill='none' stroke='rgba(90,40,224,0.05)' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: auto, auto, auto, 460px 532px, 340px 393px;
+    background-repeat: no-repeat;
+    background-position: 0 0, 0 0, 0 0, calc(100% + 90px) -70px, -60px calc(100% - 40px);
+  }
+  [data-theme="light"] body::before { opacity: 0.45; }
+  [data-theme="light"] header {
+    background: linear-gradient(160deg, #fff6ec 0%, #fdf0e0 50%, #f8e8d0 100%);
+    border-bottom-color: rgba(180,24,24,.22);
+    box-shadow: 0 2px 24px rgba(0,0,0,.1);
+  }
+  [data-theme="light"] header::after {
+    background: linear-gradient(90deg, transparent 5%, rgba(180,24,24,.45) 35%, rgba(90,40,224,.3) 65%, transparent 95%);
+  }
+  [data-theme="light"] nav button { color: var(--text-muted); }
+  [data-theme="light"] nav button:hover { border-color: rgba(180,24,24,.4); color: var(--crimson2); }
+  [data-theme="light"] nav button.active {
+    background: linear-gradient(135deg, rgba(180,24,24,.12), rgba(90,40,224,.06));
+    border-color: rgba(180,24,24,.38); color: var(--crimson2);
+    box-shadow: 0 0 12px rgba(180,24,24,.1);
+  }
+  [data-theme="light"] .summary-tile {
+    background: linear-gradient(145deg, var(--surface), var(--surface2));
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  }
+  [data-theme="light"] .summary-tile::after { background: linear-gradient(0deg, rgba(180,24,24,.03), transparent); }
+  [data-theme="light"] .lb-row {
+    background: linear-gradient(145deg, var(--surface), var(--surface2));
+    box-shadow: 0 1px 8px rgba(0,0,0,.06);
+  }
+  [data-theme="light"] .player-card, [data-theme="light"] .chart-card {
+    background: linear-gradient(145deg, var(--surface), var(--surface2));
+    box-shadow: 0 2px 14px rgba(0,0,0,.07);
+  }
+  [data-theme="light"] .chart-card::before { background: linear-gradient(90deg, transparent, rgba(180,24,24,.12), rgba(90,40,224,.08), transparent); }
+  [data-theme="light"] .hero-card { background: linear-gradient(145deg, var(--surface), var(--surface2)); }
+  [data-theme="light"] .hero-img-wrap { background: linear-gradient(145deg, #e8dcc8, #d4c8b0); }
+  [data-theme="light"] .hero-img-placeholder { background: linear-gradient(145deg, var(--surface2), var(--border)); }
+  [data-theme="light"] .hero-gem-badge { background: rgba(255,250,240,.85); }
+  [data-theme="light"] .hero-no-data { background: rgba(240,230,210,.7); }
+  [data-theme="light"] .vic-badge-crist { background: rgba(90,40,224,.1); color: var(--accent2); border-color: rgba(90,40,224,.2); }
+  [data-theme="light"] .vic-badge-elim  { background: rgba(153,27,27,.1); color: var(--loss); border-color: rgba(153,27,27,.2); }
+  [data-theme="light"] .dash-block {
+    background: rgba(253,248,238,.75);
+    border-color: var(--border);
+    box-shadow: 0 4px 24px rgba(0,0,0,.07);
+  }
+  [data-theme="light"] .dash-block--player {
+    background: rgba(246,242,255,.75);
+    box-shadow: 0 0 40px rgba(90,40,224,.04) inset;
+  }
+  [data-theme="light"] .dash-block--hero {
+    background: rgba(255,246,238,.75);
+    border-color: rgba(180,24,24,.16);
+    box-shadow: 0 0 40px rgba(180,24,24,.04) inset;
+  }
+  [data-theme="light"] .stat-row { border-bottom-color: var(--border); }
+  [data-theme="light"] .sub-section-title { border-top-color: var(--border); }
+  [data-theme="light"] .sub-section-title::after { background: linear-gradient(90deg, var(--border), transparent); }
+  [data-theme="light"] .section-title::after { background: linear-gradient(90deg, rgba(180,24,24,.18), rgba(90,40,224,.1), transparent); }
+  [data-theme="light"] .avatar-hex { background: var(--surface2); }
+  [data-theme="light"] .game-card { background: linear-gradient(145deg, var(--surface), var(--surface2)); }
+  [data-theme="light"] .game-header { background: rgba(240,232,218,.7); }
+  [data-theme="light"] .game-header:hover { background: rgba(232,220,204,.8); }
+  [data-theme="light"] .game-card.open .game-header { border-bottom-color: var(--border); }
+  [data-theme="light"] .game-table td { border-bottom-color: var(--border); }
+  [data-theme="light"] .hero-pill { background: rgba(0,0,0,.04); }
+  [data-theme="light"] .form-card { background: linear-gradient(145deg, var(--surface), var(--surface2)); }
+  [data-theme="light"] .badge-mvp { background: rgba(180,83,9,.12); color: #92400e; }
+  [data-theme="light"] .badge-lvp { background: rgba(153,27,27,.1); color: #991b1b; }
+  [data-theme="light"] .badge-win { background: rgba(22,101,52,.1); color: #166534; }
+  [data-theme="light"] .toast { background: linear-gradient(135deg, #8b1111, #5228a0); }
+  [data-theme="light"] .logo-shards { background: linear-gradient(135deg, #1a0a04 0%, #8b1818 55%, #cc2020 100%); -webkit-background-clip: text; background-clip: text; }
+  [data-theme="light"] .logo-inf { background: linear-gradient(135deg, #2a1080, #5a28e0, #7040d0); -webkit-background-clip: text; background-clip: text; }
 </style>
 </head>
 <body>
@@ -452,12 +562,15 @@
       <span class="logo-sub">Tableau de bord</span>
     </div>
   </div>
-  <nav>
-    <button class="active" onclick="showPage('dashboard')">Dashboard</button>
-    <button onclick="showPage('history')">Historique</button>
-    <button onclick="showPage('new-game')">+ Nouvelle partie</button>
-    <button onclick="showPage('settings')">Joueurs</button>
-  </nav>
+  <div style="display:flex;align-items:center;gap:.5rem">
+    <nav>
+      <button class="active" onclick="showPage('dashboard')">Dashboard</button>
+      <button onclick="showPage('history')">Historique</button>
+      <button onclick="showPage('new-game')">+ Nouvelle partie</button>
+      <button onclick="showPage('settings')">Joueurs</button>
+    </nav>
+    <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()" title="Mode clair / sombre">☀️</button>
+  </div>
 </header>
 
 <main>
@@ -586,6 +699,23 @@ let data = loadData();
 
 // =========================================================
 // NAVIGATION
+// =========================================================
+// THEME
+// =========================================================
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const next = isLight ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('shards-theme', next);
+  document.getElementById('theme-toggle').textContent = next === 'light' ? '🌙' : '☀️';
+}
+// Init toggle icon
+(function() {
+  const t = document.documentElement.getAttribute('data-theme');
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'light' ? '🌙' : '☀️';
+})();
+
 // =========================================================
 const navBtns = document.querySelectorAll('nav button');
 function showPage(id) {
