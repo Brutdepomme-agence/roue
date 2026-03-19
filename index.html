@@ -39,12 +39,17 @@
     background-image:
       radial-gradient(ellipse at 8% 0%, rgba(196,27,27,.18) 0%, transparent 42%),
       radial-gradient(ellipse at 92% 8%, rgba(124,92,252,.1) 0%, transparent 38%),
-      radial-gradient(ellipse at 85% 100%, rgba(124,92,252,.08) 0%, transparent 45%);
+      radial-gradient(ellipse at 85% 100%, rgba(124,92,252,.08) 0%, transparent 45%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 462' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='200,1 399,116 399,346 200,461 1,346 1,116' fill='rgba(196,27,27,0.025)' stroke='rgba(196,27,27,0.1)' stroke-width='1.5'/%3E%3Cpolygon points='200,71 339,151 339,311 200,391 61,311 61,151' fill='none' stroke='rgba(196,27,27,0.055)' stroke-width='1'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 300 346' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='150,1 299,87 299,259 150,345 1,259 1,87' fill='rgba(124,92,252,0.025)' stroke='rgba(124,92,252,0.1)' stroke-width='1.5'/%3E%3Cpolygon points='150,53 254,113 254,233 150,293 46,233 46,113' fill='none' stroke='rgba(124,92,252,0.055)' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: auto, auto, auto, 460px 532px, 340px 393px;
+    background-repeat: no-repeat;
+    background-position: 0 0, 0 0, 0 0, calc(100% + 90px) -70px, -60px calc(100% - 40px);
   }
   body::before {
     content: '';
     position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg width='90' height='104' viewBox='0 0 90 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M45 5 L80 25 L80 65 L45 85 L10 65 L10 25 Z' fill='none' stroke='rgba(196,27,27,0.04)' stroke-width='1'/%3E%3Cpath d='M45 24 L64 35 L64 57 L45 68 L26 57 L26 35 Z' fill='none' stroke='rgba(124,92,252,0.035)' stroke-width='0.8'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='90' height='104' viewBox='0 0 90 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M45 5 L80 25 L80 65 L45 85 L10 65 L10 25 Z' fill='rgba(196,27,27,0.018)' stroke='rgba(196,27,27,0.085)' stroke-width='1.2'/%3E%3Cpath d='M45 24 L64 35 L64 57 L45 68 L26 57 L26 35 Z' fill='rgba(124,92,252,0.014)' stroke='rgba(124,92,252,0.075)' stroke-width='0.9'/%3E%3C/svg%3E");
     pointer-events: none; z-index: 0;
   }
 
