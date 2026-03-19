@@ -8,8 +8,6 @@
 <style>
   :root {
     --bg: #0a0a14;
-    --surface: #13132200;
-    --surface-solid: #131322;
     --surface2: #1c1c32;
     --border: #2a2a50;
     --border-bright: #4a4a80;
@@ -18,10 +16,6 @@
     --accent3: #c4b5fd;
     --text: #e2e2f0;
     --text-muted: #7878a0;
-    --c0: #7c5cfc;
-    --c1: #38bdf8;
-    --c2: #4ade80;
-    --c3: #fb923c;
     --win: #4ade80;
     --loss: #f87171;
     --gold: #fbbf24;
@@ -37,8 +31,6 @@
       radial-gradient(ellipse at 20% 0%, rgba(124,92,252,.08) 0%, transparent 60%),
       radial-gradient(ellipse at 80% 100%, rgba(56,189,248,.05) 0%, transparent 60%);
   }
-
-  /* Crystal pattern background tiles */
   body::before {
     content: '';
     position: fixed; inset: 0;
@@ -46,56 +38,47 @@
     pointer-events: none; z-index: 0;
   }
 
-  /* HEADER */
+  /* ── HEADER ─────────────────────────────────── */
   header {
     background: linear-gradient(160deg, #1a1040 0%, #0e0e1c 60%, #0a0a14 100%);
     border-bottom: 1px solid var(--border);
     padding: 1rem 2rem;
     display: flex; align-items: center; justify-content: space-between;
     position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 4px 30px rgba(0,0,0,.5), 0 1px 0 rgba(124,92,252,.15);
+    box-shadow: 0 4px 30px rgba(0,0,0,.5);
   }
   header::after {
     content: '';
     position: absolute; bottom: -1px; left: 0; right: 0; height: 1px;
     background: linear-gradient(90deg, transparent, rgba(167,139,250,.4), transparent);
   }
-
   .logo { display: flex; align-items: center; gap: .85rem; }
-  .logo-icon { flex-shrink: 0; }
   .logo h1 {
     font-size: 1.35rem; font-weight: 800; letter-spacing: .22em;
     color: transparent;
     background: linear-gradient(135deg, #c4b5fd, #a78bfa, #7c5cfc);
     -webkit-background-clip: text; background-clip: text;
   }
-  .logo span { font-size: .7rem; color: var(--text-muted); display: block; letter-spacing: .25em; text-transform: uppercase; margin-top: .1rem; }
+  .logo span { font-size: .7rem; color: var(--text-muted); display: block; letter-spacing: .25em; text-transform: uppercase; }
 
-  nav { display: flex; gap: .3rem; }
+  nav { display: flex; gap: .3rem; flex-wrap: wrap; }
   nav button {
     background: transparent; border: 1px solid transparent; color: var(--text-muted);
-    padding: .5rem 1.1rem; border-radius: 8px; cursor: pointer; font-size: .84rem;
+    padding: .45rem 1rem; border-radius: 8px; cursor: pointer; font-size: .82rem;
     transition: all .2s; letter-spacing: .04em;
-    position: relative; overflow: hidden;
   }
   nav button:hover { border-color: var(--border-bright); color: var(--accent3); }
   nav button.active {
     background: linear-gradient(135deg, rgba(124,92,252,.3), rgba(124,92,252,.15));
     border-color: rgba(124,92,252,.6); color: var(--accent3);
-    box-shadow: 0 0 12px rgba(124,92,252,.25), inset 0 1px 0 rgba(255,255,255,.05);
-  }
-  nav button.active::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,.04) 0%, transparent 100%);
+    box-shadow: 0 0 12px rgba(124,92,252,.2);
   }
 
-  /* LAYOUT */
-  main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
+  /* ── LAYOUT ──────────────────────────────────── */
+  main { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
   .page { display: none; }
   .page.active { display: block; }
 
-  /* SECTION TITLE */
   .section-title {
     font-size: 1rem; font-weight: 700; color: var(--accent2);
     text-transform: uppercase; letter-spacing: .18em; margin-bottom: 1.2rem;
@@ -104,330 +87,237 @@
   .section-title::before { content: '◆'; font-size: .55rem; opacity: .6; }
   .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
 
-  /* PLAYER CARDS */
-  .player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-  .player-card {
-    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.2rem;
-    position: relative;
-    overflow: hidden;
-    transition: transform .25s, border-color .25s, box-shadow .25s;
-  }
-  .player-card:hover {
-    transform: translateY(-3px);
-    border-color: var(--border-bright);
-    box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 20px rgba(124,92,252,.08);
-  }
-  .player-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, transparent, var(--player-color), transparent);
-  }
-  .player-card::after {
-    content: '';
-    position: absolute; top: 3px; right: 1rem; width: 40px; height: 40px;
-    background: var(--player-color);
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    opacity: .06;
-  }
-  .player-card .player-name { font-size: 1.1rem; font-weight: 700; }
-  .player-card .player-avatar { font-size: .74rem; color: var(--text-muted); margin-bottom: .9rem; text-transform: uppercase; letter-spacing: .14em; }
-  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: .3rem 0; border-bottom: 1px solid rgba(42,42,80,.5); }
-  .stat-row:last-child { border-bottom: none; }
-  .stat-label { font-size: .8rem; color: var(--text-muted); }
-  .stat-val { font-size: .92rem; font-weight: 600; }
-  .badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .68rem; font-weight: 700; padding: .18rem .5rem; border-radius: 6px; text-transform: uppercase; letter-spacing: .08em; }
-  .badge-mvp { background: rgba(251,191,36,.12); color: var(--gold); border: 1px solid rgba(251,191,36,.2); }
-  .badge-lvp { background: rgba(248,113,113,.12); color: var(--loss); border: 1px solid rgba(248,113,113,.2); }
-  .badge-win { background: rgba(74,222,128,.12); color: var(--win); border: 1px solid rgba(74,222,128,.2); }
-  .badges-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .5rem; }
-
-  /* CHARTS */
-  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
-  .chart-card {
-    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
-    border: 1px solid var(--border); border-radius: 14px; padding: 1.3rem;
-    position: relative; overflow: hidden;
-  }
-  .chart-card::before {
-    content: '';
-    position: absolute; top: -20px; right: -20px; width: 80px; height: 80px;
-    background: rgba(124,92,252,.04);
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  }
-  .chart-card h3 { font-size: .78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .14em; margin-bottom: 1rem; }
-  .chart-wrap { position: relative; height: 220px; }
-
-  /* HISTORY TABLE */
-  .games-list { display: flex; flex-direction: column; gap: 1rem; }
-  .game-card {
-    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
-    border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
-  }
-  .game-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: .85rem 1.2rem;
-    background: rgba(28,28,50,.6);
-    cursor: pointer;
-    border-bottom: 1px solid transparent;
-    transition: background .2s;
-  }
-  .game-header:hover { background: rgba(40,40,70,.6); }
-  .game-card.open .game-header { border-bottom-color: var(--border); }
-  .game-header .game-date { font-size: .82rem; color: var(--text-muted); }
-  .game-header .game-title { font-weight: 600; }
-  .game-header .chevron { transition: transform .25s; font-size: .7rem; color: var(--text-muted); }
-  .game-card.open .chevron { transform: rotate(180deg); }
-  .game-body { display: none; padding: 1rem 1.2rem; }
-  .game-card.open .game-body { display: block; }
-  .game-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-  .game-table th { text-align: left; padding: .4rem .6rem; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
-  .game-table td { padding: .4rem .6rem; border-bottom: 1px solid rgba(42,42,80,.3); }
-  .game-table tr:last-child td { border-bottom: none; }
-  .rank-1 { color: var(--gold); font-weight: 700; }
-  .rank-2 { color: #c0c0c0; font-weight: 600; }
-  .rank-3 { color: #cd7f32; }
-  .delete-btn {
-    background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.25);
-    color: var(--loss); border-radius: 6px; padding: .25rem .6rem;
-    font-size: .75rem; cursor: pointer; transition: all .2s;
-  }
-  .delete-btn:hover { background: rgba(248,113,113,.2); border-color: rgba(248,113,113,.5); }
-
-  /* ===================== NEW GAME FORM ===================== */
-  .form-card {
-    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
-    border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;
-  }
-  .form-section-title {
-    font-size: .75rem; font-weight: 700; color: var(--accent2);
-    text-transform: uppercase; letter-spacing: .15em; margin-bottom: 1rem;
-  }
-  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
-  .field { display: flex; flex-direction: column; gap: .35rem; }
-  .field label { font-size: .75rem; color: var(--text-muted); font-weight: 500; letter-spacing: .06em; }
-  .field input[type="text"],
-  .field input[type="date"],
-  .field select {
-    background: var(--bg); border: 1px solid var(--border); color: var(--text);
-    padding: .5rem .75rem; border-radius: 8px; font-size: .88rem;
-    transition: border-color .2s, box-shadow .2s;
-  }
-  .field input[type="text"]:focus,
-  .field input[type="date"]:focus,
-  .field select:focus {
-    outline: none; border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(124,92,252,.18);
-  }
-  .field input[type="checkbox"] { width: auto; cursor: pointer; }
-  .checkbox-field { flex-direction: row; align-items: center; gap: .5rem; cursor: pointer; }
-  .checkbox-field label { cursor: pointer; font-size: .88rem; color: var(--text); }
-
-  /* ---- STEPPER ---- */
-  .stepper {
-    display: flex; align-items: stretch; height: 42px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px; overflow: hidden;
-    transition: border-color .2s, box-shadow .2s;
-    position: relative;
-  }
-  .stepper:focus-within,
-  .stepper:hover {
-    border-color: rgba(124,92,252,.6);
-    box-shadow: 0 0 0 2px rgba(124,92,252,.14);
-  }
-  .stepper-btn {
-    width: 42px; flex-shrink: 0;
-    background: var(--surface2);
-    border: none; border-radius: 0;
-    color: var(--accent2);
-    font-size: 1.25rem; font-weight: 300;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background .15s, color .15s;
-    user-select: none; -webkit-user-select: none;
-    touch-action: manipulation;
-    position: relative; overflow: hidden;
-  }
-  .stepper-btn::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(circle at center, rgba(167,139,250,.3) 0%, transparent 70%);
-    opacity: 0; transition: opacity .15s;
-  }
-  .stepper-btn:hover { background: rgba(124,92,252,.35); color: #fff; }
-  .stepper-btn:hover::after { opacity: 1; }
-  .stepper-btn:active { background: rgba(124,92,252,.55); transform: scale(.94); }
-  .stepper-btn.minus { border-right: 1px solid var(--border); }
-  .stepper-btn.plus  { border-left:  1px solid var(--border); }
-  .stepper-input {
-    flex: 1; min-width: 0;
-    background: transparent; border: none;
-    color: var(--text);
-    text-align: center;
-    font-size: .95rem; font-weight: 700; letter-spacing: .02em;
-    padding: 0;
-    -moz-appearance: textfield;
-    cursor: default;
-  }
-  .stepper-input::-webkit-inner-spin-button,
-  .stepper-input::-webkit-outer-spin-button { -webkit-appearance: none; }
-  .stepper-input:focus { outline: none; }
-
-  /* Bigger stepper for PDC (main stat) */
-  .stepper.big { height: 50px; }
-  .stepper.big .stepper-btn { width: 50px; font-size: 1.4rem; }
-  .stepper.big .stepper-input { font-size: 1.15rem; }
-
-  /* ---- PLAYER FORM BLOCK ---- */
-  .player-form-block {
-    background: rgba(10,10,20,.5);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.1rem 1.1rem 1rem;
-    position: relative;
-    margin-bottom: .8rem;
-    overflow: hidden;
-    transition: border-color .2s;
-  }
-  .player-form-block:hover { border-color: var(--border-bright); }
-  .player-form-block::before {
-    content: '';
-    position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
-    background: var(--player-color); border-radius: 3px 0 0 3px;
-  }
-  .player-form-block::after {
-    content: '';
-    position: absolute; top: 0; left: 3px; right: 0; height: 1px;
-    background: linear-gradient(90deg, var(--player-color), transparent 60%);
-    opacity: .5;
-  }
-  /* Crystal gem decoration */
-  .player-form-block .block-gem {
-    position: absolute; top: .9rem; right: .9rem;
-    width: 22px; height: 25px;
-    opacity: .18;
-  }
-
-  .player-form-title {
-    font-weight: 700; margin-bottom: .9rem; font-size: 1rem;
-    display: flex; align-items: center; gap: .5rem;
-  }
-  .player-form-title .avatar-tag {
-    font-weight: 400; font-size: .75rem; color: var(--text-muted);
-    background: rgba(255,255,255,.05); border: 1px solid var(--border);
-    border-radius: 4px; padding: .1rem .4rem; letter-spacing: .06em;
-  }
-
-  /* Checkboxes row */
-  .checks-col {
-    display: flex; flex-direction: column; gap: .6rem; justify-content: center;
-    padding-top: 1.2rem;
-  }
-  .check-pill {
-    display: flex; align-items: center; gap: .55rem; cursor: pointer;
-    padding: .38rem .65rem;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    background: rgba(255,255,255,.02);
-    transition: border-color .2s, background .2s;
-    font-size: .84rem;
-    user-select: none;
-  }
-  .check-pill:hover { border-color: var(--border-bright); background: rgba(255,255,255,.05); }
-  .check-pill input[type="checkbox"] { display: none; }
-  .check-pill .pill-dot {
-    width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0;
-    border: 2px solid var(--border-bright);
-    background: transparent;
-    transition: background .15s, border-color .15s;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .check-pill input:checked + .pill-dot {
-    background: var(--accent); border-color: var(--accent);
-  }
-  .check-pill input:checked + .pill-dot::after { content: '✓'; color: #fff; font-size: .65rem; font-weight: 800; }
-  .check-pill.checked { border-color: rgba(124,92,252,.4); background: rgba(124,92,252,.07); }
-
-  /* FORM ACTIONS */
-  .form-actions { display: flex; gap: .8rem; margin-top: 1.5rem; flex-wrap: wrap; }
-  .btn {
-    padding: .65rem 1.6rem; border-radius: 9px; font-size: .88rem; font-weight: 600;
-    cursor: pointer; transition: all .2s; border: none; letter-spacing: .04em;
-    position: relative; overflow: hidden;
-  }
-  .btn::before {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,.08) 0%, transparent 50%);
-  }
-  .btn-primary {
-    background: linear-gradient(135deg, #7c5cfc, #6748d8);
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(124,92,252,.3), 0 1px 0 rgba(255,255,255,.1) inset;
-  }
-  .btn-primary:hover { background: linear-gradient(135deg, #8a6efc, #7459e6); box-shadow: 0 6px 22px rgba(124,92,252,.45); }
-  .btn-secondary {
-    background: var(--surface2); color: var(--text);
-    border: 1px solid var(--border);
-    box-shadow: 0 2px 8px rgba(0,0,0,.2);
-  }
-  .btn-secondary:hover { border-color: rgba(124,92,252,.5); color: var(--accent3); }
-
-  /* PLAYERS MANAGEMENT */
-  .players-list { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
-  .player-tag {
-    display: flex; align-items: center; gap: .5rem;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 20px; padding: .3rem .7rem .3rem .5rem; font-size: .83rem;
-  }
-  .player-dot { width: 10px; height: 10px; border-radius: 50%; }
-  .remove-player { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .9rem; line-height: 1; }
-  .remove-player:hover { color: var(--loss); }
-  .add-player-row { display: flex; gap: .6rem; align-items: center; }
-  .add-player-row input { flex: 1; }
-  .add-player-row input:nth-child(2) { flex: .8; }
-
-  /* TOAST */
-  .toast {
-    position: fixed; bottom: 2rem; right: 2rem;
-    background: linear-gradient(135deg, #7c5cfc, #6748d8);
-    color: #fff;
-    padding: .75rem 1.3rem; border-radius: 10px;
-    font-size: .88rem; font-weight: 600;
-    box-shadow: 0 4px 24px rgba(124,92,252,.5);
-    transform: translateY(100px); opacity: 0;
-    transition: all .3s; z-index: 999;
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
-
-  /* EMPTY STATE */
-  .empty { text-align: center; padding: 3rem; color: var(--text-muted); }
-  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .6; }
-
-  /* SUMMARY STATS */
+  /* ── SUMMARY TILES ───────────────────────────── */
   .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .8rem; margin-bottom: 2rem; }
   .summary-tile {
     background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
     border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center;
     position: relative; overflow: hidden;
-    transition: border-color .2s, box-shadow .2s;
   }
-  .summary-tile:hover { border-color: var(--border-bright); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
-  .summary-tile::before {
-    content: '◆';
-    position: absolute; bottom: .4rem; right: .6rem;
-    font-size: .5rem; color: var(--accent); opacity: .3;
-  }
-  .summary-tile .s-val { font-size: 1.9rem; font-weight: 800; color: var(--accent2); line-height: 1; }
+  .summary-tile::before { content: '◆'; position: absolute; bottom: .4rem; right: .6rem; font-size: .5rem; color: var(--accent); opacity: .3; }
+  .summary-tile .s-val { font-size: 1.8rem; font-weight: 800; color: var(--accent2); line-height: 1.1; }
   .summary-tile .s-label { font-size: .7rem; color: var(--text-muted); margin-top: .4rem; text-transform: uppercase; letter-spacing: .1em; }
 
-  @media (max-width: 600px) {
+  /* ── LEADERBOARD ─────────────────────────────── */
+  .leaderboard { margin-bottom: 2rem; }
+  .lb-row {
+    display: flex; align-items: center; gap: .9rem;
+    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: .65rem 1rem; margin-bottom: .45rem;
+    transition: border-color .2s;
+  }
+  .lb-row:hover { border-color: var(--border-bright); }
+  .lb-rank { font-size: 1.1rem; width: 2rem; text-align: center; flex-shrink: 0; }
+  .lb-name { font-weight: 700; flex: 1; font-size: .95rem; }
+  .lb-hero { font-size: .72rem; color: var(--text-muted); }
+  .lb-pts { font-size: .8rem; color: var(--text-muted); }
+  .lb-wins { font-size: .8rem; color: var(--win); font-weight: 600; margin-left: auto; }
+  .lb-bar-wrap { width: 80px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .lb-bar { height: 100%; border-radius: 3px; transition: width .6s; }
+
+  /* ── PLAYER CARDS ────────────────────────────── */
+  .player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .player-card {
+    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
+    border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem;
+    position: relative; overflow: hidden;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+  }
+  .player-card:hover { transform: translateY(-3px); border-color: var(--border-bright); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+  .player-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--player-color), transparent); }
+  .player-card::after { content: ''; position: absolute; top: 3px; right: 1rem; width: 40px; height: 40px; background: var(--player-color); clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); opacity: .07; }
+  .player-card .player-name { font-size: 1.05rem; font-weight: 700; }
+  .player-card .player-fav-hero { font-size: .72rem; color: var(--text-muted); margin-bottom: .9rem; letter-spacing: .1em; text-transform: uppercase; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: .28rem 0; border-bottom: 1px solid rgba(42,42,80,.5); }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: .78rem; color: var(--text-muted); }
+  .stat-val { font-size: .9rem; font-weight: 600; }
+  .badge { display: inline-flex; align-items: center; gap: .2rem; font-size: .67rem; font-weight: 700; padding: .15rem .45rem; border-radius: 5px; text-transform: uppercase; letter-spacing: .07em; }
+  .badge-mvp { background: rgba(251,191,36,.1); color: var(--gold); border: 1px solid rgba(251,191,36,.2); }
+  .badge-lvp { background: rgba(248,113,113,.1); color: var(--loss); border: 1px solid rgba(248,113,113,.2); }
+  .badge-win { background: rgba(74,222,128,.1); color: var(--win); border: 1px solid rgba(74,222,128,.2); }
+  .badges-row { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .45rem; }
+
+  /* ── CHARTS ──────────────────────────────────── */
+  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
+  .chart-card {
+    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8));
+    border: 1px solid var(--border); border-radius: 14px; padding: 1.3rem;
+    position: relative; overflow: hidden;
+  }
+  .chart-card h3 { font-size: .76rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .13em; margin-bottom: 1rem; }
+  .chart-card h3 em { font-style: normal; color: rgba(120,120,160,.6); font-size: .68rem; }
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* ── HERO CARDS (Héros page) ─────────────────── */
+  .hero-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .hero-card {
+    border-radius: 14px; overflow: hidden;
+    border: 2px solid var(--border);
+    background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.9));
+    transition: transform .25s, border-color .25s, box-shadow .3s;
+    position: relative;
+  }
+  .hero-card:hover { transform: translateY(-5px); border-color: var(--hero-color, var(--accent)); box-shadow: 0 10px 40px rgba(0,0,0,.5), 0 0 20px color-mix(in srgb, var(--hero-color, var(--accent)) 30%, transparent); }
+  .hero-img-wrap { width: 100%; aspect-ratio: 3/4; overflow: hidden; position: relative; background: linear-gradient(145deg, rgba(28,28,50,.8), rgba(10,10,20,1)); }
+  .hero-img-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; transition: transform .3s; }
+  .hero-card:hover .hero-img-wrap img { transform: scale(1.04); }
+  .hero-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; background: linear-gradient(145deg, var(--surface2), var(--bg)); }
+  .hero-gem-badge {
+    position: absolute; top: .6rem; right: .6rem;
+    background: rgba(10,10,20,.7); border: 1px solid var(--hero-color, var(--border));
+    border-radius: 6px; padding: .2rem .5rem;
+    font-size: .7rem; font-weight: 800; color: var(--hero-color, var(--accent2));
+    backdrop-filter: blur(4px);
+  }
+  .hero-info { padding: .85rem; }
+  .hero-name { font-weight: 800; font-size: 1rem; color: var(--hero-color, var(--text)); margin-bottom: .5rem; }
+  .hero-winrate-big { font-size: 1.6rem; font-weight: 900; line-height: 1; margin-bottom: .35rem; }
+  .win-bar-wrap { height: 5px; background: var(--border); border-radius: 3px; margin-bottom: .6rem; overflow: hidden; }
+  .win-bar-fill { height: 100%; border-radius: 3px; background: var(--hero-color, var(--accent)); transition: width .8s ease; }
+  .hero-stat-row { display: flex; justify-content: space-between; font-size: .76rem; padding: .2rem 0; color: var(--text-muted); }
+  .hero-stat-row span:last-child { font-weight: 600; color: var(--text); }
+  .hero-vic-types { display: flex; gap: .3rem; margin-top: .5rem; flex-wrap: wrap; }
+  .vic-badge { font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 5px; }
+  .vic-badge-crist { background: rgba(124,92,252,.15); color: var(--accent2); border: 1px solid rgba(124,92,252,.3); }
+  .vic-badge-elim  { background: rgba(248,113,113,.12); color: var(--loss); border: 1px solid rgba(248,113,113,.25); }
+
+  /* No data state */
+  .hero-no-data { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,10,20,.6); border-radius: 12px; font-size: .75rem; color: var(--text-muted); }
+
+  /* ── HISTORY ─────────────────────────────────── */
+  .games-list { display: flex; flex-direction: column; gap: 1rem; }
+  .game-card { background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8)); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .game-header { display: flex; align-items: center; justify-content: space-between; padding: .85rem 1.2rem; background: rgba(28,28,50,.6); cursor: pointer; border-bottom: 1px solid transparent; transition: background .2s; }
+  .game-header:hover { background: rgba(40,40,70,.6); }
+  .game-card.open .game-header { border-bottom-color: var(--border); }
+  .game-header .game-date { font-size: .8rem; color: var(--text-muted); }
+  .game-header .game-title { font-weight: 600; }
+  .game-header .chevron { transition: transform .25s; font-size: .7rem; color: var(--text-muted); }
+  .game-card.open .chevron { transform: rotate(180deg); }
+  .game-body { display: none; padding: 1rem 1.2rem; }
+  .game-card.open .game-body { display: block; }
+  .game-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+  .game-table th { text-align: left; padding: .4rem .6rem; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); font-size: .76rem; text-transform: uppercase; letter-spacing: .08em; }
+  .game-table td { padding: .4rem .6rem; border-bottom: 1px solid rgba(42,42,80,.3); vertical-align: middle; }
+  .game-table tr:last-child td { border-bottom: none; }
+  .rank-1 { color: var(--gold); font-weight: 700; }
+  .rank-2 { color: #c0c0c0; font-weight: 600; }
+  .rank-3 { color: #cd7f32; }
+  .delete-btn { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.25); color: var(--loss); border-radius: 6px; padding: .25rem .6rem; font-size: .75rem; cursor: pointer; transition: all .2s; }
+  .delete-btn:hover { background: rgba(248,113,113,.2); }
+  .hero-pill { display: inline-flex; align-items: center; gap: .3rem; font-size: .72rem; padding: .1rem .4rem; border-radius: 4px; font-weight: 600; background: rgba(255,255,255,.05); border: 1px solid var(--border); }
+
+  /* ── NEW GAME FORM ───────────────────────────── */
+  .form-card { background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8)); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .form-section-title { font-size: .74rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: .15em; margin-bottom: 1rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+  .field { display: flex; flex-direction: column; gap: .35rem; }
+  .field label { font-size: .73rem; color: var(--text-muted); font-weight: 500; letter-spacing: .06em; }
+  .field input[type="text"], .field input[type="date"], .field select {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: .5rem .75rem; border-radius: 8px; font-size: .88rem;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,92,252,.18); }
+
+  /* Hero Picker */
+  .hero-picker { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .2rem; }
+  .hero-pick {
+    width: 62px; border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    cursor: pointer; overflow: hidden;
+    transition: border-color .2s, transform .15s, box-shadow .2s;
+    flex-shrink: 0;
+  }
+  .hero-pick:hover { transform: translateY(-2px); border-color: var(--border-bright); }
+  .hero-pick.selected { border-color: var(--pick-color, var(--accent)); box-shadow: 0 0 14px color-mix(in srgb, var(--pick-color, var(--accent)) 50%, transparent); }
+  .hero-pick img { width: 100%; aspect-ratio: 3/4; object-fit: cover; object-position: top; display: block; }
+  .hero-pick-fallback { width: 100%; aspect-ratio: 3/4; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: var(--surface2); }
+  .hero-pick-name { font-size: .58rem; font-weight: 700; text-align: center; padding: .22rem .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .04em; }
+
+  /* Player form block */
+  .player-form-block {
+    background: rgba(10,10,20,.5); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.1rem 1.1rem 1rem; position: relative; margin-bottom: .8rem;
+    overflow: hidden; transition: border-color .2s;
+  }
+  .player-form-block:hover { border-color: var(--border-bright); }
+  .player-form-block::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px; background: var(--player-color); border-radius: 3px 0 0 3px; }
+  .player-form-block::after { content: ''; position: absolute; top: 0; left: 3px; right: 0; height: 1px; background: linear-gradient(90deg, var(--player-color), transparent 60%); opacity: .5; }
+  .block-gem { position: absolute; top: .9rem; right: .9rem; width: 22px; height: 25px; opacity: .15; }
+  .player-form-title { font-weight: 700; margin-bottom: .9rem; font-size: 1rem; display: flex; align-items: center; gap: .5rem; }
+  .avatar-tag { font-weight: 400; font-size: .73rem; color: var(--text-muted); background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 4px; padding: .1rem .4rem; }
+
+  /* Steppers */
+  .stepper { display: flex; align-items: stretch; height: 42px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+  .stepper:hover { border-color: rgba(124,92,252,.5); box-shadow: 0 0 0 2px rgba(124,92,252,.1); }
+  .stepper-btn { width: 42px; flex-shrink: 0; background: var(--surface2); border: none; color: var(--accent2); font-size: 1.25rem; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, color .15s; user-select: none; touch-action: manipulation; }
+  .stepper-btn:hover { background: rgba(124,92,252,.35); color: #fff; }
+  .stepper-btn:active { background: rgba(124,92,252,.55); }
+  .stepper-btn.minus { border-right: 1px solid var(--border); }
+  .stepper-btn.plus  { border-left:  1px solid var(--border); }
+  .stepper-input { flex: 1; min-width: 0; background: transparent; border: none; color: var(--text); text-align: center; font-size: .95rem; font-weight: 700; padding: 0; -moz-appearance: textfield; }
+  .stepper-input::-webkit-inner-spin-button, .stepper-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .stepper-input:focus { outline: none; }
+  .stepper.big { height: 50px; }
+  .stepper.big .stepper-btn { width: 50px; font-size: 1.4rem; }
+  .stepper.big .stepper-input { font-size: 1.15rem; }
+
+  /* Check pills */
+  .checks-col { display: flex; flex-direction: column; gap: .5rem; justify-content: center; padding-top: 1.15rem; }
+  .check-pill { display: flex; align-items: center; gap: .5rem; cursor: pointer; padding: .35rem .6rem; border-radius: 7px; border: 1px solid var(--border); background: rgba(255,255,255,.02); transition: border-color .2s, background .2s; font-size: .83rem; user-select: none; }
+  .check-pill:hover { border-color: var(--border-bright); background: rgba(255,255,255,.04); }
+  .check-pill input[type="checkbox"] { display: none; }
+  .pill-dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; border: 2px solid var(--border-bright); background: transparent; display: flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s; font-size: .6rem; }
+  .check-pill.checked { border-color: rgba(124,92,252,.45); background: rgba(124,92,252,.08); }
+  .check-pill.checked .pill-dot { background: var(--accent); border-color: var(--accent); }
+  .check-pill.checked .pill-dot::after { content: '✓'; color: #fff; font-weight: 800; }
+
+  /* Victory type selector */
+  .vic-type-row { display: none; gap: .4rem; flex-wrap: wrap; margin-top: .3rem; padding-left: .3rem; }
+  .vic-type-row.visible { display: flex; }
+  .vic-type-pill {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .78rem; padding: .3rem .65rem; border-radius: 7px;
+    border: 1px solid var(--border); cursor: pointer;
+    transition: all .2s; background: rgba(255,255,255,.02);
+  }
+  .vic-type-pill:hover { border-color: var(--border-bright); }
+  .vic-type-pill.selected-crist { border-color: rgba(124,92,252,.6); background: rgba(124,92,252,.12); color: var(--accent3); }
+  .vic-type-pill.selected-elim  { border-color: rgba(248,113,113,.5); background: rgba(248,113,113,.1); color: var(--loss); }
+
+  /* Form actions */
+  .form-actions { display: flex; gap: .8rem; margin-top: 1.5rem; flex-wrap: wrap; }
+  .btn { padding: .65rem 1.5rem; border-radius: 9px; font-size: .88rem; font-weight: 600; cursor: pointer; transition: all .2s; border: none; letter-spacing: .04em; }
+  .btn-primary { background: linear-gradient(135deg, #7c5cfc, #6748d8); color: #fff; box-shadow: 0 4px 16px rgba(124,92,252,.3); }
+  .btn-primary:hover { background: linear-gradient(135deg, #8a6efc, #7459e6); box-shadow: 0 6px 22px rgba(124,92,252,.45); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: rgba(124,92,252,.5); color: var(--accent3); }
+
+  /* Settings */
+  .players-list { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
+  .player-tag { display: flex; align-items: center; gap: .5rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: .3rem .7rem .3rem .5rem; font-size: .83rem; }
+  .player-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .remove-player { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .9rem; }
+  .remove-player:hover { color: var(--loss); }
+  .add-player-row { display: flex; gap: .6rem; }
+  .add-player-row input { flex: 1; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: linear-gradient(135deg, #7c5cfc, #6748d8); color: #fff; padding: .75rem 1.3rem; border-radius: 10px; font-size: .88rem; font-weight: 600; box-shadow: 0 4px 24px rgba(124,92,252,.5); transform: translateY(100px); opacity: 0; transition: all .3s; z-index: 999; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .empty { text-align: center; padding: 3rem; color: var(--text-muted); }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .5; }
+
+  @media (max-width: 640px) {
     header { padding: .8rem 1rem; flex-direction: column; gap: .6rem; }
     main { padding: 1rem; }
     .charts-grid { grid-template-columns: 1fr; }
+    .hero-cards-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   }
 </style>
 </head>
@@ -435,25 +325,17 @@
 
 <header>
   <div class="logo">
-    <div class="logo-icon">
-      <!-- Crystal Shard SVG -->
-      <svg width="30" height="34" viewBox="0 0 30 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 1 L29 9.5 L29 24.5 L15 33 L1 24.5 L1 9.5 Z" stroke="rgba(167,139,250,0.6)" stroke-width="1.2"/>
-        <path d="M15 5 L25 11.5 L25 22.5 L15 29 L5 22.5 L5 11.5 Z" fill="rgba(124,92,252,0.2)" stroke="rgba(124,92,252,0.4)" stroke-width="1"/>
-        <path d="M15 10 L21 14 L21 20 L15 24 L9 20 L9 14 Z" fill="rgba(124,92,252,0.5)"/>
-        <path d="M15 13 L18 15.5 L15 21 L12 15.5 Z" fill="rgba(196,181,253,0.9)"/>
-        <path d="M15 1 L15 13" stroke="rgba(196,181,253,0.3)" stroke-width="1"/>
-        <path d="M29 9.5 L21 14" stroke="rgba(196,181,253,0.2)" stroke-width="1"/>
-        <path d="M1 9.5 L9 14" stroke="rgba(196,181,253,0.2)" stroke-width="1"/>
-      </svg>
-    </div>
-    <div>
-      <h1>SHARDS</h1>
-      <span>Tableau de bord</span>
-    </div>
+    <svg width="30" height="34" viewBox="0 0 30 34" fill="none">
+      <path d="M15 1 L29 9.5 L29 24.5 L15 33 L1 24.5 L1 9.5 Z" stroke="rgba(167,139,250,0.6)" stroke-width="1.2"/>
+      <path d="M15 5 L25 11.5 L25 22.5 L15 29 L5 22.5 L5 11.5 Z" fill="rgba(124,92,252,0.2)" stroke="rgba(124,92,252,0.4)" stroke-width="1"/>
+      <path d="M15 10 L21 14 L21 20 L15 24 L9 20 L9 14 Z" fill="rgba(124,92,252,0.5)"/>
+      <path d="M15 13 L18 15.5 L15 21 L12 15.5 Z" fill="rgba(196,181,253,0.9)"/>
+    </svg>
+    <div><h1>SHARDS</h1><span>Tableau de bord</span></div>
   </div>
   <nav>
     <button class="active" onclick="showPage('dashboard')">Dashboard</button>
+    <button onclick="showPage('heroes')">Héros</button>
     <button onclick="showPage('history')">Historique</button>
     <button onclick="showPage('new-game')">+ Nouvelle partie</button>
     <button onclick="showPage('settings')">Joueurs</button>
@@ -465,14 +347,27 @@
   <!-- DASHBOARD -->
   <div id="page-dashboard" class="page active">
     <div id="summary-tiles" class="summary-grid"></div>
+    <div class="section-title">Classement général</div>
+    <div id="leaderboard" class="leaderboard"></div>
     <div class="section-title">Stats par joueur</div>
     <div id="player-cards" class="player-grid"></div>
     <div class="section-title">Comparaisons</div>
     <div class="charts-grid">
       <div class="chart-card"><h3>Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
-      <div class="chart-card"><h3>Classement moyen</h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
+      <div class="chart-card"><h3>Classement moyen <em>↓ mieux</em></h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
       <div class="chart-card"><h3>Pdc fin de partie (moy.)</h3><div class="chart-wrap"><canvas id="chart-pdc"></canvas></div></div>
-      <div class="chart-card"><h3>Éliminations</h3><div class="chart-wrap"><canvas id="chart-elim"></canvas></div></div>
+      <div class="chart-card"><h3>Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- HÉROS -->
+  <div id="page-heroes" class="page">
+    <div class="section-title">Statistiques des héros</div>
+    <div id="hero-cards" class="hero-cards-grid"></div>
+    <div class="section-title">Comparaisons</div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>Winrate par héros (%)</h3><div class="chart-wrap"><canvas id="chart-hero-winrate"></canvas></div></div>
+      <div class="chart-card"><h3>Classement moyen <em>↓ mieux</em></h3><div class="chart-wrap"><canvas id="chart-hero-rank"></canvas></div></div>
     </div>
   </div>
 
@@ -487,14 +382,8 @@
     <div class="section-title">Enregistrer une partie</div>
     <div class="form-card">
       <div class="form-grid" style="margin-bottom:1.3rem">
-        <div class="field">
-          <label>Date</label>
-          <input type="date" id="game-date">
-        </div>
-        <div class="field">
-          <label>Notes (optionnel)</label>
-          <input type="text" id="game-notes" placeholder="Ex: soirée du vendredi">
-        </div>
+        <div class="field"><label>Date</label><input type="date" id="game-date"></div>
+        <div class="field"><label>Notes (optionnel)</label><input type="text" id="game-notes" placeholder="Ex: soirée du vendredi"></div>
       </div>
       <div id="player-forms"></div>
       <div class="form-actions">
@@ -512,7 +401,6 @@
       <div id="players-list" class="players-list"></div>
       <div class="add-player-row">
         <input type="text" id="new-player-name" placeholder="Nom du joueur">
-        <input type="text" id="new-player-avatar" placeholder="Avatar">
         <button class="btn btn-primary" onclick="addPlayer()">Ajouter</button>
       </div>
     </div>
@@ -524,40 +412,52 @@
 
 <script>
 // =========================================================
-// DATA MODEL
+// CONSTANTS
 // =========================================================
 const PLAYER_COLORS = ['#7c5cfc','#38bdf8','#4ade80','#fb923c','#f472b6','#a78bfa','#fbbf24','#34d399'];
 
+const HEROES = [
+  { name: 'Rez',        color: '#f43f5e', emoji: '🔴',
+    img: 'https://cf.geekdo-images.com/tBbvrCho1OiqhJhpp8P5Vw__imagepage/img/AZn-E2GF6jpfLNT45vOdAOWNHkA=/fit-in/900x600/filters:no_upscale():strip_icc()/pic4817676.jpg' },
+  { name: 'Volos',      color: '#4ade80', emoji: '🟢',
+    img: 'https://cf.geekdo-images.com/Lh5bnpgdroW1cq73HLvJMg__imagepage/img/T5r7xLzLNUehhZo47KtK3uvvcNI=/fit-in/900x600/filters:no_upscale():strip_icc()/pic4066673.jpg' },
+  { name: 'Ko Sing Wu', color: '#818cf8', emoji: '🟣',
+    img: 'https://stoneblade.com/cdn/shop/articles/Ko_Syn_Wu.jpg?v=1670521671&width=1100' },
+  { name: 'Decima',     color: '#f59e0b', emoji: '🟡',
+    img: 'https://cf.geekdo-images.com/qt5kcY_L9WEJVHVigexjRw__imagepage/img/bsecHcU_-XeBEDkiK6exO_BE5GI=/fit-in/900x600/filters:no_upscale():strip_icc()/pic3930093.jpg' },
+  { name: 'Tetra',      color: '#38bdf8', emoji: '🔵',
+    img: 'https://cf.geekdo-images.com/9iZylhvtMNx8a4biZ55Ipg__imagepage/img/g1FYm1cj6DS_yR7YS2JtzjVTOrs=/fit-in/900x600/filters:no_upscale():strip_icc()/pic3998597.jpg' },
+];
+function heroData(name) { return HEROES.find(h => h.name === name) || { name, color: '#888', emoji: '💎', img: null }; }
+
+// =========================================================
+// DATA
+// =========================================================
 const DEFAULT_DATA = {
   players: [
-    { name: 'Gildas',   avatar: 'Tetra',     color: PLAYER_COLORS[0] },
-    { name: 'Jules',    avatar: 'Volos',      color: PLAYER_COLORS[1] },
-    { name: 'François', avatar: 'Decima',     color: PLAYER_COLORS[2] },
-    { name: 'Ben',      avatar: 'Ko sin wu',  color: PLAYER_COLORS[3] },
+    { name: 'Gildas',   color: PLAYER_COLORS[0] },
+    { name: 'Jules',    color: PLAYER_COLORS[1] },
+    { name: 'François', color: PLAYER_COLORS[2] },
+    { name: 'Ben',      color: PLAYER_COLORS[3] },
   ],
   games: [
     {
-      id: 'game-001',
-      date: '2026-03-18',
-      notes: 'Première partie enregistrée',
+      id: 'game-001', date: '2026-03-18', notes: 'Première partie',
       results: [
-        { player: 'Gildas',   avatar: 'Tetra',     eliminations: 1, elimCristaux: 0, victoire: false, classement: 2.5, pdcFin: 22, nbCartes: 23, mvp: false, lvp: false },
-        { player: 'Jules',    avatar: 'Volos',      eliminations: 0, elimCristaux: 0, victoire: false, classement: 4,   pdcFin: 17, nbCartes: 17, mvp: true,  lvp: false },
-        { player: 'François', avatar: 'Decima',     eliminations: 0, elimCristaux: 1, victoire: true,  classement: 1,   pdcFin: 30, nbCartes: 12, mvp: false, lvp: true  },
-        { player: 'Ben',      avatar: 'Ko sin wu',  eliminations: 0, elimCristaux: 0, victoire: false, classement: 2.5, pdcFin: 11, nbCartes: 20, mvp: false, lvp: false },
+        { player: 'Gildas',   hero: 'Tetra',     eliminations: 1, elimCristaux: 0, victoire: false, typeVictoire: null,              classement: 2.5, pdcFin: 22, nbCartes: 23, mvp: false, lvp: false },
+        { player: 'Jules',    hero: 'Volos',      eliminations: 0, elimCristaux: 0, victoire: false, typeVictoire: null,              classement: 4,   pdcFin: 17, nbCartes: 17, mvp: true,  lvp: false },
+        { player: 'François', hero: 'Decima',     eliminations: 0, elimCristaux: 1, victoire: true,  typeVictoire: 'cristallisation', classement: 1,   pdcFin: 30, nbCartes: 12, mvp: false, lvp: true  },
+        { player: 'Ben',      hero: 'Ko Sing Wu', eliminations: 0, elimCristaux: 0, victoire: false, typeVictoire: null,              classement: 2.5, pdcFin: 11, nbCartes: 20, mvp: false, lvp: false },
       ]
     }
   ]
 };
 
 function loadData() {
-  try {
-    const raw = localStorage.getItem('shards-data');
-    return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_DATA));
-  } catch { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+  try { const r = localStorage.getItem('shards-data'); return r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+  catch { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
 }
 function saveData(d) { localStorage.setItem('shards-data', JSON.stringify(d)); }
-
 let data = loadData();
 
 // =========================================================
@@ -567,181 +467,226 @@ const navBtns = document.querySelectorAll('nav button');
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  navBtns.forEach((b, i) => {
-    const ids = ['dashboard','history','new-game','settings'];
-    b.classList.toggle('active', ids[i] === id);
-  });
+  const ids = ['dashboard','heroes','history','new-game','settings'];
+  navBtns.forEach((b, i) => b.classList.toggle('active', ids[i] === id));
   if (id === 'dashboard') renderDashboard();
-  if (id === 'history') renderHistory();
-  if (id === 'new-game') renderNewGameForm();
-  if (id === 'settings') renderSettings();
+  if (id === 'heroes')    renderHeroes();
+  if (id === 'history')   renderHistory();
+  if (id === 'new-game')  renderNewGameForm();
+  if (id === 'settings')  renderSettings();
 }
 
 // =========================================================
-// HELPERS
+// AGGREGATION
 // =========================================================
-function playerColor(name) {
-  const p = data.players.find(p => p.name === name);
-  return p ? p.color : '#888';
-}
-function playerAvatar(name) {
-  const p = data.players.find(p => p.name === name);
-  return p ? p.avatar : '';
-}
+function playerColor(name) { const p = data.players.find(p => p.name === name); return p ? p.color : '#888'; }
 
 function aggStats() {
   const stats = {};
-  data.players.forEach(p => {
-    stats[p.name] = { wins: 0, games: 0, totalRank: 0, totalPdc: 0, totalElim: 0, totalElimC: 0, mvp: 0, lvp: 0, totalCards: 0 };
-  });
-  data.games.forEach(g => {
-    g.results.forEach(r => {
-      if (!stats[r.player]) stats[r.player] = { wins:0,games:0,totalRank:0,totalPdc:0,totalElim:0,totalElimC:0,mvp:0,lvp:0,totalCards:0 };
-      const s = stats[r.player];
-      s.games++;
-      if (r.victoire) s.wins++;
-      s.totalRank += r.classement;
-      s.totalPdc += r.pdcFin;
-      s.totalElim += r.eliminations;
-      s.totalElimC += r.elimCristaux;
-      if (r.mvp) s.mvp++;
-      if (r.lvp) s.lvp++;
-      s.totalCards += r.nbCartes || 0;
-    });
-  });
+  data.players.forEach(p => { stats[p.name] = { wins:0, games:0, totalRank:0, totalPdc:0, totalElim:0, totalElimC:0, mvp:0, lvp:0, cristallisation:0, elimination:0 }; });
+  data.games.forEach(g => g.results.forEach(r => {
+    if (!stats[r.player]) stats[r.player] = { wins:0,games:0,totalRank:0,totalPdc:0,totalElim:0,totalElimC:0,mvp:0,lvp:0,cristallisation:0,elimination:0 };
+    const s = stats[r.player];
+    s.games++; s.totalRank += r.classement; s.totalPdc += r.pdcFin; s.totalElim += r.eliminations; s.totalElimC += r.elimCristaux;
+    if (r.victoire) { s.wins++; if (r.typeVictoire === 'cristallisation') s.cristallisation++; if (r.typeVictoire === 'elimination') s.elimination++; }
+    if (r.mvp) s.mvp++; if (r.lvp) s.lvp++;
+  }));
   return stats;
 }
 
-// =========================================================
-// STEPPER — hold to repeat
-// =========================================================
-let _stepTimer = null, _stepInterval = null;
-
-function stepChange(id, dir, step, min, max) {
-  const input = document.getElementById(id);
-  if (!input) return;
-  let val = parseFloat(input.value);
-  if (isNaN(val)) val = (min !== undefined ? min : 0);
-  val = Math.round((val + dir * step) / step) * step;
-  if (min !== undefined) val = Math.max(min, val);
-  if (max !== undefined) val = Math.min(max, val);
-  input.value = val % 1 === 0 ? val : val.toFixed(1);
-  // visual pulse
-  const stepper = input.closest('.stepper');
-  if (stepper) {
-    stepper.style.borderColor = 'rgba(167,139,250,.8)';
-    setTimeout(() => { stepper.style.borderColor = ''; }, 200);
-  }
-}
-
-function startStep(id, dir, step, min, max) {
-  stopStep();
-  stepChange(id, dir, step, min, max);
-  _stepTimer = setTimeout(() => {
-    _stepInterval = setInterval(() => stepChange(id, dir, step, min, max), 70);
-  }, 380);
-}
-
-function stopStep() {
-  clearTimeout(_stepTimer);
-  clearInterval(_stepInterval);
-  _stepTimer = null; _stepInterval = null;
-}
-
-// Auto-stop on pointer up anywhere
-document.addEventListener('pointerup', stopStep);
-document.addEventListener('pointercancel', stopStep);
-
-// Toggle checkpill
-function togglePill(checkbox, pill) {
-  checkbox.checked = !checkbox.checked;
-  pill.classList.toggle('checked', checkbox.checked);
+function aggHeroStats() {
+  const stats = {};
+  HEROES.forEach(h => { stats[h.name] = { games:0, wins:0, totalRank:0, cristallisation:0, elimination:0 }; });
+  data.games.forEach(g => g.results.forEach(r => {
+    const hName = r.hero || r.avatar; // backward compat
+    if (!hName) return;
+    if (!stats[hName]) stats[hName] = { games:0, wins:0, totalRank:0, cristallisation:0, elimination:0 };
+    const s = stats[hName];
+    s.games++; s.totalRank += r.classement;
+    if (r.victoire) {
+      s.wins++;
+      if (r.typeVictoire === 'cristallisation') s.cristallisation++;
+      if (r.typeVictoire === 'elimination') s.elimination++;
+    }
+  }));
+  return stats;
 }
 
 // =========================================================
 // DASHBOARD
 // =========================================================
 let charts = {};
+function mkChart(id, type, labels, datasets, opts={}) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id)?.getContext('2d');
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type, data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: opts.legend ?? false, labels: { color: '#a0a0c0', font: { size: 11 } } } },
+      scales: type !== 'pie' && type !== 'doughnut' ? {
+        x: { ticks: { color: '#7878a0' }, grid: { color: 'rgba(42,42,80,.35)' } },
+        y: { ticks: { color: '#7878a0' }, grid: { color: 'rgba(42,42,80,.35)' }, beginAtZero: true, ...opts.y }
+      } : {},
+      ...opts.extra
+    }
+  });
+}
+
+function alpha(c, a) { return c + Math.round(a*255).toString(16).padStart(2,'0'); }
+
 function renderDashboard() {
   const stats = aggStats();
   const players = data.players;
   const totalGames = data.games.length;
 
-  const topWinner = players.slice().sort((a,b) => (stats[b.name]?.wins||0) - (stats[a.name]?.wins||0))[0];
+  // Sorted by avg rank (best = lowest first)
+  const ranked = players.slice().filter(p => stats[p.name]?.games).sort((a,b) => {
+    const ra = stats[a.name].totalRank / stats[a.name].games;
+    const rb = stats[b.name].totalRank / stats[b.name].games;
+    return ra - rb;
+  });
+  const noGamePlayers = players.filter(p => !stats[p.name]?.games);
+
+  // Summary
+  const topRanked = ranked[0];
+  const totalWins = data.games.reduce((a,g) => a + g.results.filter(r=>r.victoire).length, 0);
+  const crist = data.games.reduce((a,g) => a + g.results.filter(r=>r.typeVictoire==='cristallisation').length, 0);
+  const elim  = data.games.reduce((a,g) => a + g.results.filter(r=>r.typeVictoire==='elimination').length, 0);
   document.getElementById('summary-tiles').innerHTML = `
     <div class="summary-tile"><div class="s-val">${totalGames}</div><div class="s-label">Parties jouées</div></div>
-    <div class="summary-tile"><div class="s-val">${players.length}</div><div class="s-label">Joueurs</div></div>
-    <div class="summary-tile"><div class="s-val" style="color:${topWinner?topWinner.color:'#fff'}">${topWinner?.name||'-'}</div><div class="s-label">Meilleur joueur</div></div>
-    <div class="summary-tile"><div class="s-val">${data.games.reduce((a,g)=>a+g.results.filter(r=>r.mvp).length,0)}</div><div class="s-label">MVP attribués</div></div>
+    <div class="summary-tile"><div class="s-val" style="color:${topRanked?.color||'#fff'}">${topRanked?.name||'-'}</div><div class="s-label">Leader classement</div></div>
+    <div class="summary-tile"><div class="s-val" style="color:var(--accent2)">${crist}</div><div class="s-label">💎 Cristallisations</div></div>
+    <div class="summary-tile"><div class="s-val" style="color:var(--loss)">${elim}</div><div class="s-label">⚔️ Éliminations</div></div>
   `;
 
-  document.getElementById('player-cards').innerHTML = players.map(p => {
+  // Leaderboard (sorted by avg rank, lower = better)
+  const lbRanks = ['🥇','🥈','🥉','4️⃣'];
+  const bestWins = Math.max(1, ...ranked.map(p => stats[p.name]?.wins || 0));
+  document.getElementById('leaderboard').innerHTML = [...ranked, ...noGamePlayers].map((p, i) => {
+    const s = stats[p.name] || {};
+    const games = s.games || 0;
+    const avgRank = games ? (s.totalRank/games).toFixed(2) : '-';
+    const winRate = games ? Math.round(s.wins/games*100) : 0;
+    const barW = games ? Math.round((s.wins / bestWins) * 100) : 0;
+    return `<div class="lb-row">
+      <span class="lb-rank">${lbRanks[i] || (i+1)+'.'}</span>
+      <span class="lb-name" style="color:${p.color}">${p.name}</span>
+      <span class="lb-hero" style="color:var(--text-muted)">${games} partie${games>1?'s':''}</span>
+      <span class="lb-pts">moy. #${avgRank}</span>
+      <div class="lb-bar-wrap"><div class="lb-bar" style="width:${barW}%;background:${p.color}"></div></div>
+      <span class="lb-wins">${s.wins||0} 🏆 (${winRate}%)</span>
+    </div>`;
+  }).join('');
+
+  // Player cards (sorted by avg rank)
+  document.getElementById('player-cards').innerHTML = [...ranked, ...noGamePlayers].map(p => {
     const s = stats[p.name] || {};
     const games = s.games || 0;
     const winRate = games ? Math.round(s.wins/games*100) : 0;
     const avgRank = games ? (s.totalRank/games).toFixed(1) : '-';
     const avgPdc = games ? Math.round(s.totalPdc/games) : '-';
+    // Most played hero
+    const heroCount = {}; data.games.forEach(g => g.results.forEach(r => { if (r.player===p.name && r.hero) heroCount[r.hero]=(heroCount[r.hero]||0)+1; }));
+    const favHero = Object.entries(heroCount).sort((a,b)=>b[1]-a[1])[0]?.[0];
+    const hd = favHero ? heroData(favHero) : null;
     const badges = [
       s.mvp > 0 ? `<span class="badge badge-mvp">⭐ MVP ×${s.mvp}</span>` : '',
       s.lvp > 0 ? `<span class="badge badge-lvp">💀 LVP ×${s.lvp}</span>` : '',
       s.wins > 0 ? `<span class="badge badge-win">🏆 ×${s.wins}</span>` : '',
     ].filter(Boolean).join('');
-    return `
-    <div class="player-card" style="--player-color:${p.color}">
+    return `<div class="player-card" style="--player-color:${p.color}">
       <div class="player-name">${p.name}</div>
-      <div class="player-avatar">${p.avatar}</div>
+      <div class="player-fav-hero">${hd ? `<span style="color:${hd.color}">${hd.name}</span>` : '—'}</div>
       <div class="stat-row"><span class="stat-label">Parties</span><span class="stat-val">${games}</span></div>
-      <div class="stat-row"><span class="stat-label">Victoires</span><span class="stat-val" style="color:var(--win)">${s.wins||0} <span style="color:var(--text-muted);font-size:.78rem">(${winRate}%)</span></span></div>
+      <div class="stat-row"><span class="stat-label">Victoires</span><span class="stat-val" style="color:var(--win)">${s.wins||0} <span style="color:var(--text-muted);font-size:.75rem">(${winRate}%)</span></span></div>
       <div class="stat-row"><span class="stat-label">Classement moy.</span><span class="stat-val">${avgRank}</span></div>
       <div class="stat-row"><span class="stat-label">Pdc moyen</span><span class="stat-val">${avgPdc}</span></div>
-      <div class="stat-row"><span class="stat-label">Éliminations</span><span class="stat-val">${s.totalElim||0} <span style="color:var(--text-muted);font-size:.78rem">(+${s.totalElimC||0} 💎)</span></span></div>
+      <div class="stat-row"><span class="stat-label">Éliminations</span><span class="stat-val">${s.totalElim||0} <span style="color:var(--text-muted);font-size:.75rem">+${s.totalElimC||0}💎</span></span></div>
+      ${s.cristallisation||s.elimination ? `<div class="stat-row"><span class="stat-label">Victoires</span><span class="stat-val"><span style="color:var(--accent2)">💎${s.cristallisation||0}</span> <span style="color:var(--loss)">⚔️${s.elimination||0}</span></span></div>` : ''}
       ${badges ? `<div class="badges-row">${badges}</div>` : ''}
     </div>`;
   }).join('');
 
-  const names = players.map(p => p.name);
-  const colors = players.map(p => p.color);
-  const alpha = (c, a) => c + Math.round(a*255).toString(16).padStart(2,'0');
-
-  const mkChart = (id, type, labels, datasets, opts={}) => {
-    if (charts[id]) charts[id].destroy();
-    const ctx = document.getElementById(id).getContext('2d');
-    charts[id] = new Chart(ctx, {
-      type, data: { labels, datasets },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: type !== 'pie' ? {
-          x: { ticks: { color: '#7878a0' }, grid: { color: 'rgba(42,42,80,.4)' } },
-          y: { ticks: { color: '#7878a0' }, grid: { color: 'rgba(42,42,80,.4)' }, beginAtZero: true, ...opts.y }
-        } : {},
-        ...opts
-      }
-    });
-  };
-
+  // Charts
+  const names = ranked.map(p => p.name);
+  const colors = ranked.map(p => p.color);
   mkChart('chart-wins', 'bar', names, [{
     data: names.map(n => stats[n]?.wins||0),
-    backgroundColor: colors.map(c => alpha(c, .65)),
-    borderColor: colors, borderWidth: 2, borderRadius: 7
+    backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
   }]);
-
   mkChart('chart-rank', 'bar', names, [{
     data: names.map(n => stats[n]?.games ? (stats[n].totalRank/stats[n].games).toFixed(2) : 0),
-    backgroundColor: colors.map(c => alpha(c, .65)),
-    borderColor: colors, borderWidth: 2, borderRadius: 7
+    backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
   }]);
-
   mkChart('chart-pdc', 'bar', names, [{
     data: names.map(n => stats[n]?.games ? Math.round(stats[n].totalPdc/stats[n].games) : 0),
-    backgroundColor: colors.map(c => alpha(c, .65)),
-    borderColor: colors, borderWidth: 2, borderRadius: 7
+    backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
   }]);
 
-  mkChart('chart-elim', 'bar', names, [
-    { label: 'Élim. joueurs',  data: names.map(n => stats[n]?.totalElim||0),  backgroundColor: colors.map(c => alpha(c,.65)),  borderColor: colors, borderWidth: 2, borderRadius: 5 },
-    { label: 'Élim. cristaux', data: names.map(n => stats[n]?.totalElimC||0), backgroundColor: '#fbbf2440', borderColor: '#fbbf24', borderWidth: 2, borderRadius: 5 }
-  ]);
+  // Victory types doughnut
+  const cristTotal = data.games.reduce((a,g) => a+g.results.filter(r=>r.typeVictoire==='cristallisation').length, 0);
+  const elimTotal  = data.games.reduce((a,g) => a+g.results.filter(r=>r.typeVictoire==='elimination').length, 0);
+  const noType     = data.games.reduce((a,g) => a+g.results.filter(r=>r.victoire&&!r.typeVictoire).length, 0);
+  mkChart('chart-victype', 'doughnut',
+    ['Cristallisation 💎', 'Élimination ⚔️', noType ? 'Non renseigné' : null].filter(Boolean),
+    [{ data: [cristTotal, elimTotal, noType || null].filter(x=>x!=null),
+       backgroundColor: ['rgba(124,92,252,.7)','rgba(248,113,113,.7)','rgba(120,120,160,.5)'],
+       borderColor: ['#7c5cfc','#f87171','#7878a0'], borderWidth: 2 }],
+    { legend: true }
+  );
+}
+
+// =========================================================
+// HEROES PAGE
+// =========================================================
+function renderHeroes() {
+  const hStats = aggHeroStats();
+  const sorted = HEROES.slice().sort((a,b) => {
+    const wa = hStats[a.name]?.games ? hStats[a.name].wins/hStats[a.name].games : -1;
+    const wb = hStats[b.name]?.games ? hStats[b.name].wins/hStats[b.name].games : -1;
+    return wb - wa;
+  });
+
+  document.getElementById('hero-cards').innerHTML = sorted.map(h => {
+    const s = hStats[h.name] || { games:0, wins:0, totalRank:0 };
+    const winrate = s.games ? Math.round(s.wins/s.games*100) : null;
+    const avgRank = s.games ? (s.totalRank/s.games).toFixed(1) : null;
+    const hasData = s.games > 0;
+    return `<div class="hero-card" style="--hero-color:${h.color}">
+      <div class="hero-img-wrap">
+        ${h.img ? `<img src="${h.img}" alt="${h.name}" onerror="this.parentNode.innerHTML='<div class=hero-img-placeholder>${h.emoji}</div>'">` : `<div class="hero-img-placeholder">${h.emoji}</div>`}
+        ${hasData ? `<div class="hero-gem-badge">${winrate}% win</div>` : ''}
+      </div>
+      <div class="hero-info">
+        <div class="hero-name">${h.name}</div>
+        ${hasData ? `
+          <div class="hero-winrate-big" style="color:${h.color}">${winrate}<span style="font-size:.9rem;font-weight:400">%</span></div>
+          <div class="win-bar-wrap"><div class="win-bar-fill" style="width:${winrate}%"></div></div>
+          <div class="hero-stat-row"><span>Parties</span><span>${s.games}</span></div>
+          <div class="hero-stat-row"><span>Victoires</span><span>${s.wins}</span></div>
+          <div class="hero-stat-row"><span>Classement moy.</span><span>#${avgRank}</span></div>
+          ${s.cristallisation||s.elimination ? `<div class="hero-vic-types">
+            ${s.cristallisation ? `<span class="vic-badge vic-badge-crist">💎 ×${s.cristallisation}</span>` : ''}
+            ${s.elimination ? `<span class="vic-badge vic-badge-elim">⚔️ ×${s.elimination}</span>` : ''}
+          </div>` : ''}
+        ` : '<div style="font-size:.75rem;color:var(--text-muted);margin-top:.3rem">Aucune partie</div>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Hero charts
+  const hNames = sorted.map(h => h.name);
+  const hColors = sorted.map(h => h.color);
+  mkChart('chart-hero-winrate', 'bar', hNames, [{
+    data: sorted.map(h => hStats[h.name]?.games ? Math.round(hStats[h.name].wins/hStats[h.name].games*100) : 0),
+    backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
+  }], { y: { max: 100 } });
+  mkChart('chart-hero-rank', 'bar', hNames, [{
+    data: sorted.map(h => hStats[h.name]?.games ? parseFloat((hStats[h.name].totalRank/hStats[h.name].games).toFixed(2)) : 0),
+    backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
+  }]);
 }
 
 // =========================================================
@@ -749,30 +694,32 @@ function renderDashboard() {
 // =========================================================
 function renderHistory() {
   const el = document.getElementById('games-list');
-  if (!data.games.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">💎</div>Aucune partie enregistrée.</div>';
-    return;
-  }
+  if (!data.games.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">💎</div>Aucune partie enregistrée.</div>'; return; }
   el.innerHTML = [...data.games].reverse().map(g => {
     const winner = g.results.find(r => r.victoire);
-    const sorted = [...g.results].sort((a,b) => a.classement - b.classement);
+    const sorted = [...g.results].sort((a,b) => a.classement - b.classement); // 1 = 1er
     const rows = sorted.map(r => {
       const rankClass = r.classement === 1 ? 'rank-1' : r.classement <= 2 ? 'rank-2' : r.classement <= 3 ? 'rank-3' : '';
-      const color = playerColor(r.player);
+      const hd = heroData(r.hero || r.avatar);
+      const vicBadge = r.typeVictoire === 'cristallisation' ? '<span class="vic-badge vic-badge-crist">💎 Crist.</span>' : r.typeVictoire === 'elimination' ? '<span class="vic-badge vic-badge-elim">⚔️ Élim.</span>' : '';
       return `<tr>
-        <td><span style="color:${color};font-weight:700">${r.player}</span> <span style="color:var(--text-muted);font-size:.78rem">${r.avatar}</span></td>
+        <td>
+          <span style="color:${playerColor(r.player)};font-weight:700">${r.player}</span>
+          <span class="hero-pill" style="color:${hd.color};border-color:${hd.color}33">${hd.emoji} ${hd.name}</span>
+        </td>
         <td class="${rankClass}">#${r.classement}</td>
         <td>${r.pdcFin} pdc</td>
         <td>${r.eliminations}${r.elimCristaux > 0 ? ` +${r.elimCristaux}💎` : ''}</td>
-        <td>${r.nbCartes || '-'} cartes</td>
-        <td>${r.mvp ? '<span class="badge badge-mvp">MVP</span>' : ''}${r.lvp ? '<span class="badge badge-lvp">LVP</span>' : ''}${r.victoire ? '<span class="badge badge-win">Victoire</span>' : ''}</td>
+        <td>${r.nbCartes||'-'} cartes</td>
+        <td>${r.mvp?'<span class="badge badge-mvp">MVP</span>':''}${r.lvp?'<span class="badge badge-lvp">LVP</span>':''}${r.victoire?`<span class="badge badge-win">Victoire</span>${vicBadge}`:''}</td>
       </tr>`;
     }).join('');
+    const winnerHd = winner ? heroData(winner.hero || winner.avatar) : null;
     return `<div class="game-card" id="${g.id}">
       <div class="game-header" onclick="toggleGame('${g.id}')">
         <div>
           <div class="game-title">Partie du ${formatDate(g.date)} ${g.notes ? '— ' + g.notes : ''}</div>
-          <div class="game-date">${g.results.length} joueurs · Vainqueur : <span style="color:${winner?playerColor(winner.player):'#888'};font-weight:700">${winner?.player||'–'}</span></div>
+          <div class="game-date">${g.results.length} joueurs · Vainqueur : <span style="color:${winner?playerColor(winner.player):'#888'};font-weight:700">${winner?.player||'–'}</span>${winnerHd ? ` <span style="color:${winnerHd.color};font-size:.8rem">${winnerHd.emoji} ${winnerHd.name}</span>` : ''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:.8rem">
           <button class="delete-btn" onclick="event.stopPropagation();deleteGame('${g.id}')">Supprimer</button>
@@ -781,7 +728,7 @@ function renderHistory() {
       </div>
       <div class="game-body">
         <table class="game-table">
-          <tr><th>Joueur</th><th>Classement</th><th>Points</th><th>Éliminations</th><th>Deck</th><th>Badges</th></tr>
+          <tr><th>Joueur & Héros</th><th>Classement</th><th>Points</th><th>Éliminations</th><th>Deck</th><th>Résultat</th></tr>
           ${rows}
         </table>
       </div>
@@ -804,19 +751,70 @@ function formatDate(d) {
 }
 
 // =========================================================
-// STEPPER HTML helper
+// STEPPER
 // =========================================================
+let _stepTimer = null, _stepInterval = null;
+function stepChange(id, dir, step, min, max) {
+  const input = document.getElementById(id); if (!input) return;
+  let val = parseFloat(input.value); if (isNaN(val)) val = min ?? 0;
+  val = Math.round((val + dir * step) / step) * step;
+  if (min != null) val = Math.max(min, val);
+  if (max != null) val = Math.min(max, val);
+  input.value = val % 1 === 0 ? val : val.toFixed(1);
+}
+function startStep(id, dir, step, min, max) {
+  stopStep(); stepChange(id, dir, step, min, max);
+  _stepTimer = setTimeout(() => { _stepInterval = setInterval(() => stepChange(id, dir, step, min, max), 70); }, 380);
+}
+function stopStep() { clearTimeout(_stepTimer); clearInterval(_stepInterval); _stepTimer = null; _stepInterval = null; }
+document.addEventListener('pointerup', stopStep);
+document.addEventListener('pointercancel', stopStep);
+
 function stepperHTML(id, value, step, min, max, big) {
   const cls = big ? 'stepper big' : 'stepper';
   return `<div class="${cls}">
-    <button class="stepper-btn minus"
-      onpointerdown="startStep('${id}',-1,${step},${min},${max})"
-      onpointerup="stopStep()" onpointerleave="stopStep()">−</button>
+    <button class="stepper-btn minus" onpointerdown="startStep('${id}',-1,${step},${min},${max})" onpointerup="stopStep()" onpointerleave="stopStep()">−</button>
     <input class="stepper-input" type="number" id="${id}" value="${value}" min="${min}" max="${max}" step="${step}" readonly>
-    <button class="stepper-btn plus"
-      onpointerdown="startStep('${id}',1,${step},${min},${max})"
-      onpointerup="stopStep()" onpointerleave="stopStep()">+</button>
+    <button class="stepper-btn plus"  onpointerdown="startStep('${id}', 1,${step},${min},${max})" onpointerup="stopStep()" onpointerleave="stopStep()">+</button>
   </div>`;
+}
+
+// =========================================================
+// HERO PICKER
+// =========================================================
+function pickHero(playerIdx, heroName) {
+  document.getElementById(`r_${playerIdx}_hero`).value = heroName;
+  document.querySelectorAll(`.hero-pick[data-player="${playerIdx}"]`).forEach(el => {
+    el.classList.toggle('selected', el.dataset.hero === heroName);
+  });
+}
+
+// =========================================================
+// VICTORY TYPE
+// =========================================================
+function toggleVictoire(i) {
+  const cb = document.getElementById(`r_${i}_victoire`);
+  const pill = document.getElementById(`pill_${i}_victoire`);
+  cb.checked = !cb.checked;
+  pill.classList.toggle('checked', cb.checked);
+  const row = document.getElementById(`victype_row_${i}`);
+  row.classList.toggle('visible', cb.checked);
+  if (!cb.checked) {
+    document.getElementById(`r_${i}_typeVictoire`).value = '';
+    document.querySelectorAll(`[data-vicplayer="${i}"]`).forEach(p => p.classList.remove('selected-crist','selected-elim'));
+  }
+}
+function setTypeVictoire(playerIdx, type) {
+  document.getElementById(`r_${playerIdx}_typeVictoire`).value = type;
+  document.querySelectorAll(`[data-vicplayer="${playerIdx}"]`).forEach(p => {
+    p.classList.remove('selected-crist','selected-elim');
+    if (p.dataset.victype === type) p.classList.add(type === 'cristallisation' ? 'selected-crist' : 'selected-elim');
+  });
+}
+function togglePill(id, pillEl) {
+  const cb = document.getElementById(id);
+  cb.checked = !cb.checked;
+  pillEl.classList.toggle('checked', cb.checked);
 }
 
 // =========================================================
@@ -826,58 +824,50 @@ function renderNewGameForm() {
   document.getElementById('game-date').value = new Date().toISOString().slice(0,10);
   const el = document.getElementById('player-forms');
   el.innerHTML = data.players.map((p, i) => {
-    const gemPath = `<svg class="block-gem" viewBox="0 0 22 25" fill="none"><path d="M11 0 L22 7 L22 18 L11 25 L0 18 L0 7 Z" fill="${p.color}"/><path d="M11 4 L18 9 L18 16 L11 21 L4 16 L4 9 Z" fill="rgba(255,255,255,0.15)"/><path d="M11 8 L15 11 L11 17 L7 11 Z" fill="rgba(255,255,255,0.4)"/></svg>`;
-    return `
-    <div class="player-form-block" style="--player-color:${p.color}">
-      ${gemPath}
-      <div class="player-form-title" style="color:${p.color}">
-        ${p.name}
-        <span class="avatar-tag">${p.avatar}</span>
+    const heroPickerHTML = HEROES.map(h => `
+      <div class="hero-pick" data-player="${i}" data-hero="${h.name}" style="--pick-color:${h.color}" onclick="pickHero(${i},'${h.name}')">
+        ${h.img ? `<img src="${h.img}" alt="${h.name}" onerror="this.parentNode.innerHTML='<div class=hero-pick-fallback>${h.emoji}</div>'">` : `<div class="hero-pick-fallback">${h.emoji}</div>`}
+        <div class="hero-pick-name" style="background:rgba(0,0,0,.5);color:${h.color}">${h.name}</div>
+      </div>`).join('');
+
+    return `<div class="player-form-block" style="--player-color:${p.color}">
+      <svg class="block-gem" viewBox="0 0 22 25" fill="none"><path d="M11 0 L22 7 L22 18 L11 25 L0 18 L0 7 Z" fill="${p.color}"/><path d="M11 4 L18 9 L18 16 L11 21 L4 16 L4 9 Z" fill="rgba(255,255,255,0.15)"/><path d="M11 8 L15 11 L11 17 L7 11 Z" fill="rgba(255,255,255,0.4)"/></svg>
+      <div class="player-form-title" style="color:${p.color}">${p.name}</div>
+
+      <div class="field" style="margin-bottom:.9rem">
+        <label>Héros joué</label>
+        <div class="hero-picker">${heroPickerHTML}</div>
+        <input type="hidden" id="r_${i}_hero" value="">
       </div>
+
       <div class="form-grid">
-        <div class="field">
-          <label>Classement (1 = 1er)</label>
-          ${stepperHTML(`r_${i}_classement`, '', 0.5, 1, 10, false)}
-        </div>
-        <div class="field">
-          <label>Pdc fin de partie</label>
-          ${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 999, true)}
-        </div>
-        <div class="field">
-          <label>Cartes dans le deck</label>
-          ${stepperHTML(`r_${i}_cartes`, '0', 1, 0, 99, false)}
-        </div>
-        <div class="field">
-          <label>Éliminations joueurs</label>
-          ${stepperHTML(`r_${i}_elim`, '0', 1, 0, 99, false)}
-        </div>
-        <div class="field">
-          <label>Éliminations 💎 cristaux</label>
-          ${stepperHTML(`r_${i}_elimc`, '0', 1, 0, 99, false)}
-        </div>
+        <div class="field"><label>Position finale (1 = 1er ↑ mieux)</label>${stepperHTML(`r_${i}_classement`, '', 0.5, 1, 10, false)}</div>
+        <div class="field"><label>Pdc fin de partie</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 999, true)}</div>
+        <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`r_${i}_cartes`, '0', 1, 0, 99, false)}</div>
+        <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`r_${i}_elim`, '0', 1, 0, 99, false)}</div>
+        <div class="field"><label>Éliminations 💎 cristaux</label>${stepperHTML(`r_${i}_elimc`, '0', 1, 0, 99, false)}</div>
         <div class="field">
           <label>Résultats</label>
           <div class="checks-col">
-            <div class="check-pill" id="pill_${i}_victoire" onclick="togglePill(document.getElementById('r_${i}_victoire'), this)">
-              <input type="checkbox" id="r_${i}_victoire">
-              <span class="pill-dot"></span>
-              Victoire 🏆
+            <div class="check-pill" id="pill_${i}_victoire" onclick="toggleVictoire(${i})">
+              <input type="checkbox" id="r_${i}_victoire"><span class="pill-dot"></span>Victoire 🏆
             </div>
-            <div class="check-pill" id="pill_${i}_mvp" onclick="togglePill(document.getElementById('r_${i}_mvp'), this)">
-              <input type="checkbox" id="r_${i}_mvp">
-              <span class="pill-dot"></span>
-              MVP ⭐
+            <div class="vic-type-row" id="victype_row_${i}">
+              <div class="vic-type-pill" data-vicplayer="${i}" data-victype="cristallisation" onclick="setTypeVictoire(${i},'cristallisation')">💎 Cristallisation</div>
+              <div class="vic-type-pill" data-vicplayer="${i}" data-victype="elimination" onclick="setTypeVictoire(${i},'elimination')">⚔️ Élimination</div>
             </div>
-            <div class="check-pill" id="pill_${i}_lvp" onclick="togglePill(document.getElementById('r_${i}_lvp'), this)">
-              <input type="checkbox" id="r_${i}_lvp">
-              <span class="pill-dot"></span>
-              LVP 💀
+            <input type="hidden" id="r_${i}_typeVictoire" value="">
+            <div class="check-pill" id="pill_${i}_mvp" onclick="togglePill('r_${i}_mvp', this)">
+              <input type="checkbox" id="r_${i}_mvp"><span class="pill-dot"></span>MVP ⭐
+            </div>
+            <div class="check-pill" id="pill_${i}_lvp" onclick="togglePill('r_${i}_lvp', this)">
+              <input type="checkbox" id="r_${i}_lvp"><span class="pill-dot"></span>LVP 💀
             </div>
           </div>
         </div>
       </div>
-    </div>
-  `}).join('');
+    </div>`;
+  }).join('');
 }
 
 function resetForm() { renderNewGameForm(); }
@@ -886,27 +876,25 @@ function saveGame() {
   const date = document.getElementById('game-date').value;
   const notes = document.getElementById('game-notes').value.trim();
   if (!date) { toast('Veuillez sélectionner une date.'); return; }
-
   const results = [];
   for (let i = 0; i < data.players.length; i++) {
     const p = data.players[i];
     const classement = parseFloat(document.getElementById(`r_${i}_classement`).value);
     const pdc = parseInt(document.getElementById(`r_${i}_pdc`).value);
-    if (isNaN(classement) || isNaN(pdc)) { toast(`Veuillez remplir tous les champs pour ${p.name}.`); return; }
+    if (isNaN(classement) || isNaN(pdc)) { toast(`Remplir position et Pdc pour ${p.name}.`); return; }
     results.push({
       player: p.name,
-      avatar: p.avatar,
+      hero: document.getElementById(`r_${i}_hero`).value || null,
       eliminations: parseInt(document.getElementById(`r_${i}_elim`).value)||0,
       elimCristaux: parseInt(document.getElementById(`r_${i}_elimc`).value)||0,
       victoire: document.getElementById(`r_${i}_victoire`).checked,
-      classement,
-      pdcFin: pdc,
+      typeVictoire: document.getElementById(`r_${i}_typeVictoire`).value || null,
+      classement, pdcFin: pdc,
       nbCartes: parseInt(document.getElementById(`r_${i}_cartes`).value)||0,
       mvp: document.getElementById(`r_${i}_mvp`).checked,
       lvp: document.getElementById(`r_${i}_lvp`).checked,
     });
   }
-
   data.games.push({ id: 'game-' + Date.now(), date, notes, results });
   saveData(data);
   toast('Partie enregistrée !');
@@ -919,38 +907,25 @@ function saveGame() {
 // SETTINGS
 // =========================================================
 function renderSettings() {
-  const el = document.getElementById('players-list');
-  el.innerHTML = data.players.map((p, i) => `
+  document.getElementById('players-list').innerHTML = data.players.map((p, i) => `
     <div class="player-tag">
       <div class="player-dot" style="background:${p.color}"></div>
       <span>${p.name}</span>
-      <span style="color:var(--text-muted);font-size:.75rem">· ${p.avatar}</span>
       <button class="remove-player" onclick="removePlayer(${i})" title="Retirer">✕</button>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
-
 function addPlayer() {
   const name = document.getElementById('new-player-name').value.trim();
-  const avatar = document.getElementById('new-player-avatar').value.trim();
   if (!name) { toast('Nom requis.'); return; }
   if (data.players.find(p => p.name === name)) { toast('Ce joueur existe déjà.'); return; }
-  const color = PLAYER_COLORS[data.players.length % PLAYER_COLORS.length];
-  data.players.push({ name, avatar: avatar || name, color });
+  data.players.push({ name, color: PLAYER_COLORS[data.players.length % PLAYER_COLORS.length] });
   saveData(data);
   document.getElementById('new-player-name').value = '';
-  document.getElementById('new-player-avatar').value = '';
-  renderSettings();
-  toast('Joueur ajouté !');
+  renderSettings(); toast('Joueur ajouté !');
 }
-
 function removePlayer(i) {
-  const p = data.players[i];
-  if (!confirm(`Retirer ${p.name} ? Ses données dans les parties resteront.`)) return;
-  data.players.splice(i, 1);
-  saveData(data);
-  renderSettings();
-  toast('Joueur retiré.');
+  if (!confirm(`Retirer ${data.players[i].name} ?`)) return;
+  data.players.splice(i, 1); saveData(data); renderSettings(); toast('Joueur retiré.');
 }
 
 // =========================================================
@@ -958,8 +933,7 @@ function removePlayer(i) {
 // =========================================================
 function toast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
