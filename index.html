@@ -434,37 +434,167 @@
     .wheel-container { width: min(90vw, 360px); height: min(90vw, 360px); }
   }
 
-  /* ── SPINNING WHEEL ──────────────────────────── */
-  .wheel-page { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 2rem 0; }
-  .wheel-container {
-    position: relative; width: 400px; height: 400px;
+  /* ── EPIC DRUM PICKER ───────────────────────────── */
+  .drum-page { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 2rem 0; }
+
+  .drum-machine {
+    position: relative; width: 100%; max-width: 500px;
+    border-radius: 20px; overflow: hidden;
+    background: linear-gradient(170deg, rgba(20,4,4,.92), rgba(4,4,14,.97));
+    border: 1px solid rgba(196,27,27,.35);
+    box-shadow: 0 0 80px rgba(196,27,27,.15), 0 0 0 1px rgba(124,92,252,.05), inset 0 1px 0 rgba(255,255,255,.04);
   }
-  .wheel-pointer-wrap {
-    position: absolute; top: -28px; left: 50%; transform: translateX(-50%); z-index: 10;
-    filter: drop-shadow(0 0 8px rgba(196,27,27,.8));
+  .drum-header {
+    padding: .9rem 1.5rem .6rem; border-bottom: 1px solid rgba(196,27,27,.12); text-align: center;
   }
-  .wheel-pointer { font-size: 2.2rem; color: var(--crimson2); line-height: 1; }
-  .wheel-outer-ring {
-    width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
-    border: 4px solid var(--border);
-    box-shadow: 0 0 0 2px rgba(196,27,27,.3), 0 0 50px rgba(196,27,27,.2), 0 0 100px rgba(124,92,252,.1);
-    position: relative;
+  .drum-title { font-size: .72rem; font-weight: 700; letter-spacing: .5em; text-transform: uppercase; color: var(--text-muted); }
+
+  .drum-roll { position: relative; height: 240px; }
+  .drum-fade-top, .drum-fade-bot {
+    position: absolute; left: 0; right: 0; height: 72px; z-index: 5; pointer-events: none;
   }
-  #spin-wheel { width: 100%; height: 100%; }
-  #spin-wheel svg { width: 100%; height: 100%; display: block; }
-  .wheel-result {
-    font-size: 1.8rem; font-weight: 700; min-height: 3rem; text-align: center;
-    letter-spacing: .08em; transition: color .4s;
+  .drum-fade-top { top: 0;    background: linear-gradient(to bottom, rgba(14,4,4,.96), transparent); }
+  .drum-fade-bot { bottom: 0; background: linear-gradient(to top,   rgba(14,4,4,.96), transparent); }
+  .drum-band-side {
+    position: absolute; left: 0; right: 0; height: 72px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 700; letter-spacing: .25em;
+    opacity: .28; pointer-events: none; transition: color .08s;
   }
-  .btn-spin {
-    font-size: 1.05rem; padding: .9rem 2.8rem; letter-spacing: .25em;
-    text-transform: uppercase; font-weight: 700;
-    background: linear-gradient(135deg, rgba(196,27,27,.7), rgba(124,92,252,.5));
-    border: 1px solid rgba(196,27,27,.5);
-    box-shadow: 0 0 24px rgba(196,27,27,.25);
+  .drum-band-prev { top: 0; }
+  .drum-band-next { bottom: 0; }
+  .drum-band-center {
+    position: absolute; top: 72px; bottom: 72px; left: 0; right: 0;
+    display: flex; align-items: center; background: rgba(196,27,27,.05);
   }
-  .btn-spin:hover { box-shadow: 0 0 36px rgba(196,27,27,.4); transform: translateY(-2px); }
-  .btn-spin:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .drum-sel-line {
+    position: absolute; left: 1.5rem; right: 1.5rem; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(196,27,27,.8), rgba(124,92,252,.5), transparent);
+  }
+  .drum-sel-top { top: 0; } .drum-sel-bot { bottom: 0; }
+  .drum-center-inner {
+    display: flex; align-items: center; gap: 1.5rem; padding: 0 2rem; width: 100%; height: 100%;
+  }
+  .drum-c-avatar {
+    width: 76px; height: 76px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    border: 2px solid transparent; transition: box-shadow .25s;
+  }
+  .drum-c-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+  .drum-c-init {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; font-weight: 800; color: white;
+  }
+  .drum-c-name {
+    font-size: 2.5rem; font-weight: 800; letter-spacing: .18em; flex: 1;
+    transition: filter .1s, text-shadow .25s;
+  }
+
+  /* Scanline overlay on drum */
+  .drum-scanlines {
+    position: absolute; inset: 0; pointer-events: none; z-index: 4;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,.04) 3px, rgba(0,0,0,.04) 4px);
+  }
+
+  /* Win overlay */
+  .drum-win-overlay {
+    position: absolute; inset: 0; z-index: 30;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .drum-win-overlay.active { display: flex; animation: overlayIn .45s ease forwards; }
+  @keyframes overlayIn {
+    from { backdrop-filter: blur(0px); opacity: 0; }
+    to   { backdrop-filter: blur(6px); opacity: 1; }
+  }
+  #particle-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .drum-win-inner {
+    position: relative; z-index: 31; text-align: center;
+    animation: winBurst .5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes winBurst {
+    0%  { transform: scale(.15) rotate(-18deg); opacity: 0; }
+    65% { transform: scale(1.1)  rotate(2deg);  opacity: 1; }
+    100%{ transform: scale(1)    rotate(0deg);  opacity: 1; }
+  }
+  .win-avatar {
+    width: 96px; height: 96px; border-radius: 50%; overflow: hidden;
+    margin: 0 auto 1rem; border: 3px solid currentColor;
+    animation: glowAv 1.4s ease-in-out infinite;
+  }
+  .win-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+  .win-init { width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.4rem;font-weight:800; }
+  @keyframes glowAv {
+    0%,100% { box-shadow: 0 0 20px var(--pc,#fff); }
+    50%     { box-shadow: 0 0 70px var(--pc,#fff), 0 0 110px var(--pc,rgba(255,255,255,.3)); }
+  }
+  .win-player-name {
+    font-size: 3rem; font-weight: 800; letter-spacing: .22em;
+    animation: glowTxt 1.4s ease-in-out infinite;
+  }
+  @keyframes glowTxt {
+    0%,100% { text-shadow: 0 0 20px var(--pc,transparent); }
+    50%     { text-shadow: 0 0 60px var(--pc,transparent), 0 0 100px var(--pc,transparent); }
+  }
+  .win-commence {
+    font-size: .78rem; letter-spacing: .65em; color: var(--text-muted);
+    text-transform: uppercase; margin-top: .6rem;
+    animation: fadeLetters .7s .35s backwards;
+  }
+  @keyframes fadeLetters {
+    from { letter-spacing: 2.5em; opacity: 0; }
+    to   { letter-spacing: .65em; opacity: 1; }
+  }
+  @keyframes machineShake {
+    0%,100%{ transform: translate(0,0) rotate(0); }
+    10%    { transform: translate(-12px,-4px) rotate(-.6deg); }
+    20%    { transform: translate(14px,5px)  rotate(.6deg); }
+    30%    { transform: translate(-10px,2px) rotate(-.3deg); }
+    40%    { transform: translate(10px,-2px) rotate(.3deg); }
+    55%    { transform: translate(-5px,1px); }
+    70%    { transform: translate(5px,-1px); }
+    85%    { transform: translate(-2px,0); }
+  }
+
+  /* The LANCER button */
+  .btn-drum-spin {
+    padding: 1rem 3.2rem; font-size: .95rem; font-weight: 800;
+    letter-spacing: .45em; text-transform: uppercase; font-family: inherit;
+    background: linear-gradient(135deg, rgba(196,27,27,.85), rgba(124,92,252,.65));
+    border: 1px solid rgba(196,27,27,.65); border-radius: 14px;
+    color: #fff; cursor: pointer;
+    box-shadow: 0 0 30px rgba(196,27,27,.35), 0 4px 24px rgba(0,0,0,.5);
+    transition: all .2s; position: relative; overflow: hidden;
+  }
+  .btn-drum-spin::after {
+    content: ''; position: absolute; top: 50%; left: -60%; width: 35%; height: 200%;
+    background: rgba(255,255,255,.18); transform: translateY(-50%) skewX(-20deg); transition: left .4s;
+  }
+  .btn-drum-spin:hover::after { left: 120%; }
+  .btn-drum-spin:hover { box-shadow: 0 0 55px rgba(196,27,27,.5), 0 0 25px rgba(124,92,252,.3), 0 4px 32px rgba(0,0,0,.5); transform: translateY(-2px); }
+  .btn-drum-spin:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+  /* Hero matchup section */
+  .hero-matchup-wrap { width: 100%; max-width: 500px; }
+  .hero-matchup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: .9rem; }
+  @media (max-width: 480px) { .hero-matchup-grid { grid-template-columns: 1fr; } }
+  .hmc-card {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+    padding: .75rem 1rem; display: flex; align-items: center; gap: .7rem;
+    border-left: 3px solid var(--pc, var(--border));
+    transition: box-shadow .2s;
+  }
+  .hmc-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.3); }
+  .hmc-player { font-weight: 700; font-size: .9rem; flex: 1; min-width: 0; }
+  .hmc-arrow { color: var(--text-muted); font-size: .75rem; flex-shrink: 0; }
+  .hmc-hero-info { display: flex; align-items: center; gap: .45rem; flex-shrink: 0; }
+  .hmc-hero-img { width: 26px; height: 33px; object-fit: cover; object-position: top; border-radius: 4px; }
+  .hmc-hero-name { font-size: .8rem; font-weight: 600; }
+  .btn-reshuf {
+    background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+    padding: .5rem 1rem; border-radius: 8px; cursor: pointer; font-size: .78rem;
+    font-family: inherit; font-weight: 600; letter-spacing: .08em; transition: all .2s; width: 100%;
+  }
+  .btn-reshuf:hover { border-color: var(--accent2); color: var(--accent2); }
 
   /* ── RESULT 3-STATE PICKER ───────────────────── */
   .result-picker { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .3rem; }
@@ -574,8 +704,10 @@
   [data-theme="light"] .sub-section-title::after { background: linear-gradient(90deg, var(--border), transparent); }
   [data-theme="light"] .section-title::after { background: linear-gradient(90deg, rgba(180,24,24,.18), rgba(90,40,224,.1), transparent); }
   [data-theme="light"] .avatar-hex { background: var(--surface2); }
-  [data-theme="light"] .wheel-outer-ring { border-color: var(--border); box-shadow: 0 0 0 2px rgba(180,24,24,.2), 0 0 30px rgba(180,24,24,.1); }
-  [data-theme="light"] .btn-spin { background: linear-gradient(135deg,rgba(180,24,24,.6),rgba(90,40,224,.4)); border-color: rgba(180,24,24,.4); }
+  [data-theme="light"] .drum-machine { background: linear-gradient(170deg,rgba(240,225,225,.95),rgba(255,252,250,.98)); border-color: rgba(180,24,24,.25); }
+  [data-theme="light"] .drum-fade-top { background: linear-gradient(to bottom,rgba(240,225,225,.98),transparent); }
+  [data-theme="light"] .drum-fade-bot { background: linear-gradient(to top,rgba(240,225,225,.98),transparent); }
+  [data-theme="light"] .btn-drum-spin { background: linear-gradient(135deg,rgba(180,24,24,.75),rgba(90,40,224,.55)); border-color: rgba(180,24,24,.5); }
   [data-theme="light"] .game-card { background: linear-gradient(145deg, var(--surface), var(--surface2)); }
   [data-theme="light"] .game-header { background: rgba(240,232,218,.7); }
   [data-theme="light"] .game-header:hover { background: rgba(232,220,204,.8); }
@@ -680,14 +812,37 @@
 
   <!-- WHEEL -->
   <div id="page-wheel" class="page">
-    <div class="section-title">Qui commence ?</div>
-    <div class="wheel-page">
-      <div class="wheel-container">
-        <div class="wheel-pointer-wrap"><div class="wheel-pointer">▼</div></div>
-        <div class="wheel-outer-ring"><div id="spin-wheel"></div></div>
+    <div class="drum-page">
+      <!-- The machine -->
+      <div class="drum-machine" id="drum-machine">
+        <div class="drum-header"><span class="drum-title">⚔️ &nbsp; Qui commence ? &nbsp; ⚔️</span></div>
+        <div class="drum-roll">
+          <div class="drum-fade-top"></div>
+          <div class="drum-fade-bot"></div>
+          <div class="drum-scanlines"></div>
+          <div class="drum-band-side drum-band-prev" id="drum-prev"></div>
+          <div class="drum-band-center">
+            <div class="drum-sel-line drum-sel-top"></div>
+            <div id="drum-center-inner" class="drum-center-inner"></div>
+            <div class="drum-sel-line drum-sel-bot"></div>
+          </div>
+          <div class="drum-band-side drum-band-next" id="drum-next"></div>
+        </div>
+        <!-- Win overlay (inside machine) -->
+        <div id="drum-win-overlay" class="drum-win-overlay" onclick="closeDrumWin()">
+          <canvas id="particle-canvas"></canvas>
+          <div id="drum-win-inner" class="drum-win-inner"></div>
+        </div>
       </div>
-      <div id="wheel-result" class="wheel-result"></div>
-      <button class="btn btn-primary btn-spin" id="btn-spin" onclick="spinWheel()">🎲 &nbsp;Tourner la roue</button>
+
+      <button id="btn-drum-spin" class="btn-drum-spin" onclick="spinDrum()">LANCER</button>
+
+      <!-- Hero assignments -->
+      <div class="hero-matchup-wrap">
+        <div class="section-title">Héros ce soir</div>
+        <div id="hero-matchup" class="hero-matchup-grid"></div>
+        <button class="btn-reshuf" onclick="reshuffleHeroes()">🎲 &nbsp;Re-tirer les héros</button>
+      </div>
     </div>
   </div>
 
@@ -1175,80 +1330,213 @@ function togglePill(id, pillEl) {
 }
 
 // =========================================================
-// SPINNING WHEEL
+// EPIC DRUM PICKER
 // =========================================================
-let _wheelRot = 0, _wheelSpinning = false;
+let _drumSpinning = false;
+let _heroAssignments = {};
+
+function hexToRgb(hex) {
+  const h = (hex||'#888').replace('#','');
+  const full = h.length === 3 ? h.split('').map(c=>c+c).join('') : h;
+  return [parseInt(full.slice(0,2),16), parseInt(full.slice(2,4),16), parseInt(full.slice(4,6),16)];
+}
 
 function renderWheel() {
   const players = data.players;
-  const n = players.length;
-  if (!n) { document.getElementById('spin-wheel').innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem">Aucun joueur configuré</p>'; return; }
-  const cx = 200, cy = 200, r = 198;
-  const textR = 130;
-  const sector = 360 / n;
-  let paths = '';
-  for (let i = 0; i < n; i++) {
-    const s = i * sector, e = (i + 1) * sector;
-    const sRad = (s - 90) * Math.PI / 180, eRad = (e - 90) * Math.PI / 180;
-    const x1 = cx + r * Math.cos(sRad), y1 = cy + r * Math.sin(sRad);
-    const x2 = cx + r * Math.cos(eRad), y2 = cy + r * Math.sin(eRad);
-    const la = sector > 180 ? 1 : 0;
-    const midRad = ((s + e) / 2 - 90) * Math.PI / 180;
-    const tx = cx + textR * Math.cos(midRad), ty = cy + textR * Math.sin(midRad);
-    const rot = (s + e) / 2;
-    const c = players[i].color;
-    // Sector fill with slight radial gradient effect via two paths
-    paths += `<path d="M${cx},${cy}L${x1},${y1}A${r},${r},0,${la},1,${x2},${y2}Z" fill="${c}" opacity=".9" stroke="rgba(4,4,14,.6)" stroke-width="2"/>`;
-    paths += `<text x="${tx}" y="${ty}" transform="rotate(${rot},${tx},${ty})" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="19" font-weight="700" font-family="Rajdhani,Arial" style="text-shadow:0 1px 4px rgba(0,0,0,.9)">${players[i].name}</text>`;
-  }
-  // Decorative rings + center pin
-  paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(196,27,27,.4)" stroke-width="3"/>`;
-  paths += `<circle cx="${cx}" cy="${cy}" r="28" fill="rgba(4,4,14,.95)" stroke="rgba(196,27,27,.8)" stroke-width="3"/>`;
-  paths += `<circle cx="${cx}" cy="${cy}" r="11" fill="#dc2626"/>`;
-  paths += `<circle cx="${cx}" cy="${cy}" r="5" fill="#fca5a5"/>`;
-  document.getElementById('spin-wheel').innerHTML =
-    `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
-  // Reset
-  _wheelRot = 0;
-  const el = document.getElementById('spin-wheel');
-  el.style.transition = 'none';
-  el.style.transform = 'rotate(0deg)';
-  document.getElementById('wheel-result').innerHTML = '';
-  const btn = document.getElementById('btn-spin');
-  if (btn) { btn.disabled = false; }
+  if (!players.length) return;
+  updateDrumBands(0, false);
+  const ov = document.getElementById('drum-win-overlay');
+  if (ov) ov.classList.remove('active');
+  const btn = document.getElementById('btn-drum-spin');
+  if (btn) btn.disabled = false;
+  reshuffleHeroes();
 }
 
-function spinWheel() {
-  if (_wheelSpinning) return;
+function updateDrumBands(idx, spinning) {
   const players = data.players;
-  const n = players.length;
-  if (!n) return;
-  _wheelSpinning = true;
-  const btn = document.getElementById('btn-spin');
+  const n = players.length; if (!n) return;
+  const prev = players[(idx-1+n)%n];
+  const curr = players[idx];
+  const next = players[(idx+1)%n];
+  const prevEl = document.getElementById('drum-prev');
+  const nextEl = document.getElementById('drum-next');
+  const cInner = document.getElementById('drum-center-inner');
+  if (prevEl) { prevEl.textContent = prev.name; prevEl.style.color = prev.color; }
+  if (nextEl) { nextEl.textContent = next.name; nextEl.style.color = next.color; }
+  if (!cInner) return;
+  const photo = PLAYER_PHOTOS[curr.name];
+  const blur = spinning ? 'filter:blur(3px);opacity:.6' : '';
+  const glow = spinning ? '' : `text-shadow:0 0 35px ${curr.color},0 0 70px ${curr.color}44`;
+  const avGlow = spinning ? `box-shadow:0 0 8px ${curr.color}44` : `box-shadow:0 0 35px ${curr.color},0 0 60px ${curr.color}44`;
+  cInner.innerHTML = `
+    <div class="drum-c-avatar" style="border-color:${curr.color};${avGlow}">
+      ${photo
+        ? `<img src="${photo}" alt="${curr.name}">`
+        : `<div class="drum-c-init" style="background:${curr.color}22;color:${curr.color}">${curr.name[0]}</div>`}
+    </div>
+    <div class="drum-c-name" style="color:${curr.color};${glow};${blur}">${curr.name}</div>`;
+}
+
+function spinDrum() {
+  if (_drumSpinning) return;
+  _drumSpinning = true;
+  const ov = document.getElementById('drum-win-overlay');
+  if (ov) ov.classList.remove('active');
+  const btn = document.getElementById('btn-drum-spin');
   if (btn) btn.disabled = true;
-
-  const sector = 360 / n;
+  const n = data.players.length; if (!n) { _drumSpinning = false; return; }
   const winner = Math.floor(Math.random() * n);
-  // Place winner's sector center at top (pointer = top = 0°)
-  const winnerCenter = winner * sector + sector / 2;
-  const alignAngle = (360 - winnerCenter % 360) % 360;
-  const spins = 5 + Math.floor(Math.random() * 4); // 5–8 turns
-  _wheelRot = _wheelRot + spins * 360 + alignAngle;
 
-  const el = document.getElementById('spin-wheel');
-  el.style.transition = 'transform 4.8s cubic-bezier(0.17,0.67,0.12,0.99)';
-  el.style.transform = `rotate(${_wheelRot}deg)`;
+  // Build timing schedule: fast → decelerate → dramatic final
+  const sched = [];
+  for (let i=0;i<20;i++) sched.push(50 + i*1.5);         // acceleration phase
+  [90,120,160,210,275,355,450,560,680,820,980].forEach(t=>sched.push(t)); // decelerate
 
-  document.getElementById('wheel-result').innerHTML = '🎲&nbsp;&nbsp;…';
-  document.getElementById('wheel-result').style.color = 'var(--text-muted)';
+  // Build index sequence ending on winner
+  const steps = sched.length;
+  const startIdx = ((winner - steps) % n + n * 20) % n;
+  let step = 0;
 
-  setTimeout(() => {
-    _wheelSpinning = false;
-    if (btn) btn.disabled = false;
-    const p = players[winner];
-    document.getElementById('wheel-result').innerHTML =
-      `<span style="color:${p.color}">◆ ${p.name} commence !</span>`;
-  }, 5000);
+  function tick() {
+    const idx = (startIdx + step) % n;
+    if (step === steps) {
+      updateDrumBands(winner, false);
+      _drumSpinning = false;
+      setTimeout(() => showWinner(winner), 320);
+      return;
+    }
+    updateDrumBands(idx, step < 20);
+    step++;
+    setTimeout(tick, sched[step-1]);
+  }
+  tick();
+}
+
+function showWinner(idx) {
+  const p = data.players[idx];
+  const photo = PLAYER_PHOTOS[p.name];
+  const machine = document.getElementById('drum-machine');
+  const ov = document.getElementById('drum-win-overlay');
+  const inner = document.getElementById('drum-win-inner');
+  if (!ov || !inner) return;
+
+  // Shake
+  if (machine) {
+    machine.style.animation = 'none';
+    machine.offsetHeight;
+    machine.style.animation = 'machineShake .55s ease';
+    setTimeout(() => machine.style.animation = '', 600);
+  }
+
+  const [r,g,b] = hexToRgb(p.color);
+  ov.style.background = `radial-gradient(ellipse at center, rgba(${r},${g},${b},.3) 0%, rgba(4,4,14,.88) 65%)`;
+  ov.style.setProperty('--pc', p.color);
+
+  inner.innerHTML = `
+    <div class="win-avatar" style="color:${p.color};--pc:${p.color}">
+      ${photo
+        ? `<img src="${photo}" alt="${p.name}">`
+        : `<div class="win-init" style="background:${p.color}33;color:${p.color}">${p.name[0]}</div>`}
+    </div>
+    <div class="win-player-name" style="color:${p.color};--pc:${p.color}">${p.name}</div>
+    <div class="win-commence">commence !</div>`;
+
+  ov.classList.add('active');
+
+  // Particles
+  const canvas = document.getElementById('particle-canvas');
+  if (canvas) {
+    canvas.width = canvas.offsetWidth || 500;
+    canvas.height = canvas.offsetHeight || 240;
+    launchParticles(canvas, p.color, r, g, b);
+  }
+}
+
+function closeDrumWin() {
+  const ov = document.getElementById('drum-win-overlay');
+  if (ov) ov.classList.remove('active');
+  const btn = document.getElementById('btn-drum-spin');
+  if (btn) btn.disabled = false;
+}
+
+function launchParticles(canvas, color, r, g, b) {
+  const ctx = canvas.getContext('2d');
+  const cx = canvas.width/2, cy = canvas.height/2;
+  const particles = [];
+
+  // Dots
+  for (let i=0; i<90; i++) {
+    const ang = Math.random()*Math.PI*2, spd = 1.5+Math.random()*7;
+    const cols = [color, '#dc2626', '#ffffff', '#a78bfa'];
+    particles.push({
+      x:cx, y:cy, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd-2.5,
+      size:1.5+Math.random()*3.5, color:cols[Math.floor(Math.random()*cols.length)],
+      life:1, decay:.016+Math.random()*.018, gravity:.09, shard:false
+    });
+  }
+  // Hex shards
+  for (let i=0; i<28; i++) {
+    const ang = Math.random()*Math.PI*2, spd = 1+Math.random()*5;
+    particles.push({
+      x:cx, y:cy, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd-1.5,
+      size:3+Math.random()*7, color:color,
+      life:1, decay:.012+Math.random()*.014, gravity:.06,
+      shard:true, rot:Math.random()*Math.PI*2, rotSpd:(Math.random()-.5)*.25, sides:Math.random()>.5?6:4
+    });
+  }
+
+  function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let alive = false;
+    for (const p of particles) {
+      if (p.life <= 0) continue;
+      alive = true;
+      p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity; p.vx*=.985; p.life-=p.decay;
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      if (p.shard) {
+        ctx.save(); ctx.translate(p.x,p.y);
+        p.rot+=p.rotSpd; ctx.rotate(p.rot);
+        ctx.beginPath();
+        const sides = p.sides||6;
+        for (let j=0;j<sides;j++) {
+          const a = j*Math.PI*2/sides;
+          j===0 ? ctx.moveTo(Math.cos(a)*p.size, Math.sin(a)*p.size)
+                : ctx.lineTo(Math.cos(a)*p.size, Math.sin(a)*p.size);
+        }
+        ctx.closePath(); ctx.fill(); ctx.restore();
+      } else {
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+    if (alive) requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+function reshuffleHeroes() {
+  const players = data.players;
+  const pool = [...HEROES];
+  for (let i=pool.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  _heroAssignments = {};
+  players.forEach((p,i) => { _heroAssignments[p.name] = pool[i % pool.length]; });
+  const grid = document.getElementById('hero-matchup');
+  if (!grid) return;
+  grid.innerHTML = players.map(p => {
+    const h = _heroAssignments[p.name];
+    return `<div class="hmc-card" style="--pc:${p.color};border-left-color:${p.color}">
+      <span class="hmc-player" style="color:${p.color}">${p.name}</span>
+      <span class="hmc-arrow">→</span>
+      <div class="hmc-hero-info">
+        ${h.img ? `<img class="hmc-hero-img" src="${h.img}" alt="${h.name}" onerror="this.style.display='none'">` : `<span style="font-size:1.1rem">${h.emoji}</span>`}
+        <span class="hmc-hero-name" style="color:${h.color}">${h.name}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // =========================================================
