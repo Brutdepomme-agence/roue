@@ -1291,6 +1291,7 @@ function openEditGame(gameId) {
         <div class="field"><label>Concentration de fin</label>${stepperHTML(`er_${i}_pdc`, r.pdcFin??0, 1, 0, 30, true)}</div>
         <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`er_${i}_cartes`, r.nbCartes??0, 1, 0, 99, false)}</div>
         <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`er_${i}_elim`, r.eliminations??0, 1, 0, 99, false)}</div>
+        <div class="field"><label>Élim. cristaux 💎</label>${stepperHTML(`er_${i}_elimc`, r.elimCristaux??0, 1, 0, 99, false)}</div>
         <div class="field"><label>Cartes bannies</label>${stepperHTML(`er_${i}_bans`, r.nbBans??0, 1, 0, 99, false)}</div>
         <div class="field">
           <label>Résultat</label>
@@ -1354,8 +1355,9 @@ function saveEditGame() {
     r.classement   = parseFloat(document.getElementById(`er_${i}_classement`).value) || 1;
     r.pdcFin       = parseInt(document.getElementById(`er_${i}_pdc`).value)  || 0;
     r.nbCartes     = parseInt(document.getElementById(`er_${i}_cartes`).value)|| 0;
-    r.eliminations = parseInt(document.getElementById(`er_${i}_elim`).value)  || 0;
-    r.nbBans       = parseInt(document.getElementById(`er_${i}_bans`).value)  || 0;
+    r.eliminations = parseInt(document.getElementById(`er_${i}_elim`).value)   || 0;
+    r.elimCristaux = parseInt(document.getElementById(`er_${i}_elimc`).value)  || 0;
+    r.nbBans       = parseInt(document.getElementById(`er_${i}_bans`).value)   || 0;
     const rt = document.getElementById(`er_${i}_result`).value;
     r.victoire     = rt !== 'defeat';
     r.typeVictoire = rt === 'crist' ? 'cristallisation' : rt === 'elim' ? 'elimination' : null;
@@ -1723,6 +1725,7 @@ function renderNewGameForm() {
         <div class="field"><label>Concentration de fin</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 30, true)}</div>
         <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`r_${i}_cartes`, '0', 1, 0, 99, false)}</div>
         <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`r_${i}_elim`, '0', 1, 0, 99, false)}</div>
+        <div class="field"><label>Élim. cristaux 💎</label>${stepperHTML(`r_${i}_elimc`, '0', 1, 0, 99, false)}</div>
         <div class="field"><label>Cartes bannies</label>${stepperHTML(`r_${i}_bans`, '0', 1, 0, 99, false)}</div>
         <div class="field">
           <label>Résultat</label>
@@ -1768,7 +1771,7 @@ function saveGame() {
       player: p.name,
       hero: document.getElementById(`r_${i}_hero`).value || null,
       eliminations: parseInt(document.getElementById(`r_${i}_elim`).value)||0,
-      elimCristaux: 0,
+      elimCristaux: parseInt(document.getElementById(`r_${i}_elimc`).value)||0,
       victoire, typeVictoire,
       classement, pdcFin: pdc,
       nbCartes: parseInt(document.getElementById(`r_${i}_cartes`).value)||0,
