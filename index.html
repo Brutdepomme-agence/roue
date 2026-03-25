@@ -257,6 +257,42 @@
   /* No data state */
   .hero-no-data { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(10,10,20,.6); border-radius: 12px; font-size: .75rem; color: var(--text-muted); }
 
+  /* ── EDIT MODAL ──────────────────────────────── */
+  .edit-modal {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(4,4,14,.82); backdrop-filter: blur(6px);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 2rem 1rem; overflow-y: auto;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .edit-modal.open { opacity: 1; pointer-events: all; }
+  .edit-modal-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; width: 100%; max-width: 860px;
+    animation: slideUp .28s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .edit-modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(196,27,27,.08), rgba(124,92,252,.05));
+  }
+  .edit-modal-head h2 { font-size: 1rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .edit-modal-close { background: transparent; border: 1px solid var(--border); color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; line-height: 1; transition: all .15s; }
+  .edit-modal-close:hover { border-color: var(--crimson2); color: var(--crimson2); }
+  .edit-modal-body { padding: 1.4rem 1.5rem; }
+  .edit-meta { display: grid; grid-template-columns: 170px 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .edit-meta input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: .5rem .85rem; border-radius: 9px; font-family: inherit; font-size: .95rem; transition: border-color .2s; }
+  .edit-meta input:focus { outline: none; border-color: var(--accent2); }
+  .edit-modal-foot {
+    display: flex; gap: .7rem; justify-content: flex-end;
+    padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+  }
+  .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: .55rem 1.2rem; border-radius: 9px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: .88rem; transition: all .15s; }
+  .btn-cancel:hover { border-color: var(--border-bright); color: var(--text); }
+  .btn-save { background: linear-gradient(135deg, rgba(124,92,252,.7), rgba(196,27,27,.4)); border: 1px solid rgba(124,92,252,.5); color: #fff; padding: .55rem 1.4rem; border-radius: 9px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: .88rem; letter-spacing: .06em; transition: all .15s; }
+  .btn-save:hover { box-shadow: 0 0 16px rgba(124,92,252,.3); }
+
   /* ── HISTORY ─────────────────────────────────── */
   .games-list { display: flex; flex-direction: column; gap: 1rem; }
   .game-card { background: linear-gradient(145deg, var(--surface2), rgba(10,10,20,.8)); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
@@ -1215,6 +1251,118 @@ function heroCardsHTML() {
 // =========================================================
 // HISTORY
 // =========================================================
+// =========================================================
+// EDIT GAME MODAL
+// =========================================================
+let _editGameId = null;
+
+function openEditGame(gameId) {
+  _editGameId = gameId;
+  const g = data.games.find(x => x.id === gameId);
+  if (!g) return;
+  document.getElementById('edit-date').value = g.date || '';
+  document.getElementById('edit-notes').value = g.notes || '';
+
+  const el = document.getElementById('edit-player-forms');
+  el.innerHTML = g.results.map((r, i) => {
+    const p = data.players.find(pl => pl.name === r.player) || { name: r.player, color: '#888' };
+    const heroPickerHTML = HEROES.map(h => `
+      <div class="hero-pick" data-editplayer="${i}" data-hero="${h.name}" style="--pick-color:${h.color}" onclick="editPickHero(${i},'${h.name}')">
+        ${h.img ? `<img src="${h.img}" alt="${h.name}" onerror="this.parentNode.innerHTML='<div class=hero-pick-fallback>${h.emoji}</div>'">` : `<div class="hero-pick-fallback">${h.emoji}</div>`}
+        <div class="hero-pick-name" style="background:rgba(0,0,0,.5);color:${h.color}">${h.name}</div>
+      </div>`).join('');
+    const rt = r.typeVictoire === 'cristallisation' ? 'crist' : r.typeVictoire === 'elimination' ? 'elim' : 'defeat';
+    return `<div class="player-form-block" style="--player-color:${p.color}">
+      <svg class="block-gem" viewBox="0 0 22 25" fill="none"><path d="M11 0 L22 7 L22 18 L11 25 L0 18 L0 7 Z" fill="${p.color}"/><path d="M11 4 L18 9 L18 16 L11 21 L4 16 L4 9 Z" fill="rgba(255,255,255,0.15)"/><path d="M11 8 L15 11 L11 17 L7 11 Z" fill="rgba(255,255,255,0.4)"/></svg>
+      <div class="player-form-title" style="color:${p.color}">${p.name}</div>
+      <div class="field" style="margin-bottom:.9rem">
+        <label>Héros joué</label>
+        <div class="hero-picker">${heroPickerHTML}</div>
+        <input type="hidden" id="er_${i}_hero" value="${r.hero||''}">
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>Position finale</label>${stepperHTML(`er_${i}_classement`, r.classement||1, 0.5, 1, 5, false)}</div>
+        <div class="field"><label>Concentration de fin</label>${stepperHTML(`er_${i}_pdc`, r.pdcFin??0, 1, 0, 30, true)}</div>
+        <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`er_${i}_cartes`, r.nbCartes??0, 1, 0, 99, false)}</div>
+        <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`er_${i}_elim`, r.eliminations??0, 1, 0, 99, false)}</div>
+        <div class="field"><label>Cartes bannies</label>${stepperHTML(`er_${i}_bans`, r.nbBans??0, 1, 0, 99, false)}</div>
+        <div class="field">
+          <label>Résultat</label>
+          <div class="result-picker">
+            <div class="result-pill${rt==='defeat'?' rp-defeat':''}" id="erp_${i}_defeat" onclick="editSetResult(${i},'defeat')">💀 Défaite</div>
+            <div class="result-pill${rt==='crist'?' rp-crist':''}"  id="erp_${i}_crist"  onclick="editSetResult(${i},'crist')">💎 Victoire cristaux</div>
+            <div class="result-pill${rt==='elim'?' rp-elim':''}"   id="erp_${i}_elim"   onclick="editSetResult(${i},'elim')">⚔️ Victoire élim.</div>
+          </div>
+          <input type="hidden" id="er_${i}_result" value="${rt}">
+        </div>
+        <div class="field">
+          <label>Distinctions</label>
+          <div class="checks-col">
+            <div class="check-pill${r.mvp?' checked':''}" id="epill_${i}_mvp" onclick="togglePill('er_${i}_mvp',this)">
+              <input type="checkbox" id="er_${i}_mvp"${r.mvp?' checked':''}><span class="pill-dot"></span>MVP ⭐
+            </div>
+            <div class="check-pill${r.lvp?' checked':''}" id="epill_${i}_lvp" onclick="togglePill('er_${i}_lvp',this)">
+              <input type="checkbox" id="er_${i}_lvp"${r.lvp?' checked':''}><span class="pill-dot"></span>LVP 💀
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Pre-select heroes
+  g.results.forEach((r, i) => { if (r.hero) editPickHero(i, r.hero); });
+  document.getElementById('edit-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  _editGameId = null;
+}
+
+function editPickHero(playerIdx, heroName) {
+  const inp = document.getElementById(`er_${playerIdx}_hero`);
+  if (inp) inp.value = heroName;
+  document.querySelectorAll(`.hero-pick[data-editplayer="${playerIdx}"]`).forEach(el =>
+    el.classList.toggle('selected', el.dataset.hero === heroName));
+}
+
+function editSetResult(i, type) {
+  const inp = document.getElementById(`er_${i}_result`);
+  if (inp) inp.value = type;
+  ['defeat','crist','elim'].forEach(t => {
+    const el = document.getElementById(`erp_${i}_${t}`);
+    if (el) el.className = 'result-pill' + (type === t ? ` rp-${t}` : '');
+  });
+}
+
+function saveEditGame() {
+  const g = data.games.find(x => x.id === _editGameId);
+  if (!g) return;
+  g.date  = document.getElementById('edit-date').value;
+  g.notes = document.getElementById('edit-notes').value.trim();
+  g.results.forEach((r, i) => {
+    r.hero         = document.getElementById(`er_${i}_hero`).value || null;
+    r.classement   = parseFloat(document.getElementById(`er_${i}_classement`).value) || 1;
+    r.pdcFin       = parseInt(document.getElementById(`er_${i}_pdc`).value)  || 0;
+    r.nbCartes     = parseInt(document.getElementById(`er_${i}_cartes`).value)|| 0;
+    r.eliminations = parseInt(document.getElementById(`er_${i}_elim`).value)  || 0;
+    r.nbBans       = parseInt(document.getElementById(`er_${i}_bans`).value)  || 0;
+    const rt = document.getElementById(`er_${i}_result`).value;
+    r.victoire     = rt !== 'defeat';
+    r.typeVictoire = rt === 'crist' ? 'cristallisation' : rt === 'elim' ? 'elimination' : null;
+    r.mvp = document.getElementById(`er_${i}_mvp`).checked;
+    r.lvp = document.getElementById(`er_${i}_lvp`).checked;
+  });
+  saveData(data);
+  closeEditModal();
+  renderHistory();
+  renderDashboard();
+  toast('Partie mise à jour !');
+}
+
 function renderHistory() {
   const el = document.getElementById('games-list');
   if (!data.games.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">💎</div>Aucune partie enregistrée.</div>'; return; }
@@ -1245,6 +1393,7 @@ function renderHistory() {
           <div class="game-date">${g.results.length} joueurs · Vainqueur : <span style="color:${winner?playerColor(winner.player):'#888'};font-weight:700">${winner?.player||'–'}</span>${winnerHd ? ` <span style="color:${winnerHd.color};font-size:.8rem">${winnerHd.emoji} ${winnerHd.name}</span>` : ''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:.8rem">
+          <button class="delete-btn" style="background:rgba(124,92,252,.15);border-color:rgba(124,92,252,.3);color:var(--accent2)" onclick="event.stopPropagation();openEditGame('${g.id}')">✏️ Modifier</button>
           <button class="delete-btn" onclick="event.stopPropagation();deleteGame('${g.id}')">Supprimer</button>
           <span class="chevron">▼</span>
         </div>
@@ -1669,5 +1818,26 @@ function toast(msg) {
 // =========================================================
 renderDashboard();
 </script>
+
+<!-- EDIT MODAL -->
+<div id="edit-modal" class="edit-modal" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-modal-box">
+    <div class="edit-modal-head">
+      <h2>✏️ Modifier la partie</h2>
+      <button class="edit-modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <div class="edit-meta">
+        <div class="field"><label>Date</label><input type="date" id="edit-date"></div>
+        <div class="field"><label>Notes</label><input type="text" id="edit-notes" placeholder="Notes…"></div>
+      </div>
+      <div id="edit-player-forms" class="form-grid"></div>
+    </div>
+    <div class="edit-modal-foot">
+      <button class="btn-cancel" onclick="closeEditModal()">Annuler</button>
+      <button class="btn-save" onclick="saveEditGame()">💾 Mettre à jour</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
