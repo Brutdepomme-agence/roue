@@ -809,6 +809,7 @@
         <div class="chart-card"><h3>Classement moyen <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
         <div class="chart-card"><h3>Concentration (moy.)</h3><div class="chart-wrap"><canvas id="chart-pdc"></canvas></div></div>
         <div class="chart-card"><h3>Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
+        <div class="chart-card"><h3>Éliminations (moy.)</h3><div class="chart-wrap"><canvas id="chart-elim"></canvas></div></div>
       </div>
     </div>
 
@@ -1195,6 +1196,11 @@ function renderDashboard() {
     data: names.map(n => stats[n]?.games ? Math.round(stats[n].totalPdc/stats[n].games) : 0),
     backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
   }]);
+
+  mkChart('chart-elim', 'bar', names, [{
+    data: names.map(n => stats[n]?.games ? parseFloat((stats[n].totalElim / stats[n].games).toFixed(2)) : 0),
+    backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
+  }], { extra: { plugins: { tooltip: { callbacks: { label: ctx => `Élim. moy. : ${ctx.parsed.y}` } } } } });
 
   // Victory types doughnut
   const cristTotal = data.games.reduce((a,g) => a+g.results.filter(r=>r.typeVictoire==='cristallisation').length, 0);
