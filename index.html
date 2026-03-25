@@ -1568,6 +1568,7 @@ function renderNewGameForm() {
         <div class="field"><label>Concentration de fin</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 30, true)}</div>
         <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`r_${i}_cartes`, '0', 1, 0, 99, false)}</div>
         <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`r_${i}_elim`, '0', 1, 0, 99, false)}</div>
+        <div class="field"><label>Cartes bannies</label>${stepperHTML(`r_${i}_bans`, '0', 1, 0, 99, false)}</div>
         <div class="field">
           <label>Résultat</label>
           <div class="result-picker">
@@ -1616,6 +1617,7 @@ function saveGame() {
       victoire, typeVictoire,
       classement, pdcFin: pdc,
       nbCartes: parseInt(document.getElementById(`r_${i}_cartes`).value)||0,
+      nbBans: parseInt(document.getElementById(`r_${i}_bans`).value)||0,
       mvp: document.getElementById(`r_${i}_mvp`).checked,
       lvp: document.getElementById(`r_${i}_lvp`).checked,
     });
