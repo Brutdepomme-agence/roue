@@ -322,6 +322,13 @@
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
   .field { display: flex; flex-direction: column; gap: .35rem; }
   .field label { font-size: .73rem; color: var(--text-muted); font-weight: 500; letter-spacing: .06em; }
+  .nr-head { display: flex; align-items: center; justify-content: space-between; }
+  .nr-head label { margin-bottom: 0; }
+  .nr-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: .1rem .38rem; border-radius: 5px; cursor: pointer; font-size: .62rem; font-weight: 700; font-family: inherit; letter-spacing: .05em; line-height: 1.5; transition: all .15s; }
+  .nr-btn:hover { border-color: var(--border-bright); color: var(--text); }
+  .nr-btn.active { background: rgba(196,27,27,.15); border-color: var(--crimson2); color: var(--crimson3); }
+  .nr-disabled .stepper { opacity: .3; pointer-events: none; }
+  .nr-disabled .stepper-input::placeholder { color: var(--text-muted); }
   .field input[type="text"], .field input[type="date"], .field select {
     background: var(--bg); border: 1px solid var(--border); color: var(--text);
     padding: .5rem .75rem; border-radius: 8px; font-size: .88rem;
@@ -997,11 +1004,22 @@ function playerColor(name) { const p = data.players.find(p => p.name === name); 
 
 function aggStats() {
   const stats = {};
-  data.players.forEach(p => { stats[p.name] = { wins:0, games:0, totalRank:0, totalPdc:0, totalElim:0, totalElimC:0, mvp:0, lvp:0, cristallisation:0, elimination:0 }; });
+  const blank = () => ({ wins:0, games:0,
+    totalRank:0, rankGames:0, totalPdc:0, pdcGames:0,
+    totalElim:0, elimGames:0, totalElimC:0, elimCGames:0,
+    totalCartes:0, cartesGames:0, totalBans:0, bansGames:0,
+    mvp:0, lvp:0, cristallisation:0, elimination:0 });
+  data.players.forEach(p => { stats[p.name] = blank(); });
   data.games.forEach(g => g.results.forEach(r => {
-    if (!stats[r.player]) stats[r.player] = { wins:0,games:0,totalRank:0,totalPdc:0,totalElim:0,totalElimC:0,mvp:0,lvp:0,cristallisation:0,elimination:0 };
+    if (!stats[r.player]) stats[r.player] = blank();
     const s = stats[r.player];
-    s.games++; s.totalRank += r.classement; s.totalPdc += r.pdcFin; s.totalElim += r.eliminations; s.totalElimC += r.elimCristaux;
+    s.games++;
+    if (r.classement   != null) { s.totalRank  += r.classement;    s.rankGames++;   }
+    if (r.pdcFin       != null) { s.totalPdc   += r.pdcFin;        s.pdcGames++;    }
+    if (r.eliminations != null) { s.totalElim  += r.eliminations;  s.elimGames++;   }
+    if (r.elimCristaux != null) { s.totalElimC += r.elimCristaux;  s.elimCGames++;  }
+    if (r.nbCartes     != null) { s.totalCartes+= r.nbCartes;      s.cartesGames++; }
+    if (r.nbBans       != null) { s.totalBans  += r.nbBans;        s.bansGames++;   }
     if (r.victoire) { s.wins++; if (r.typeVictoire === 'cristallisation') s.cristallisation++; if (r.typeVictoire === 'elimination') s.elimination++; }
     if (r.mvp) s.mvp++; if (r.lvp) s.lvp++;
   }));
@@ -1188,17 +1206,17 @@ function renderDashboard() {
 
   // Classement : inverted so rank 1 = tallest bar (nPlayers + 1 - avgRank)
   mkChart('chart-rank', 'bar', names, [{
-    data: names.map(n => stats[n]?.games ? parseFloat((nPlayers + 1 - stats[n].totalRank/stats[n].games).toFixed(2)) : 0),
+    data: names.map(n => stats[n]?.rankGames ? parseFloat((nPlayers + 1 - stats[n].totalRank/stats[n].rankGames).toFixed(2)) : 0),
     backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
   }], { y: { max: nPlayers + 0.5 }, extra: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Classement moy. : #${(nPlayers + 1 - ctx.parsed.y).toFixed(1)}` } } } } });
 
   mkChart('chart-pdc', 'bar', names, [{
-    data: names.map(n => stats[n]?.games ? Math.round(stats[n].totalPdc/stats[n].games) : 0),
+    data: names.map(n => stats[n]?.pdcGames ? parseFloat((stats[n].totalPdc/stats[n].pdcGames).toFixed(1)) : 0),
     backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
   }]);
 
   mkChart('chart-elim', 'bar', names, [{
-    data: names.map(n => stats[n]?.games ? parseFloat((stats[n].totalElim / stats[n].games).toFixed(2)) : 0),
+    data: names.map(n => stats[n]?.elimGames ? parseFloat((stats[n].totalElim / stats[n].elimGames).toFixed(2)) : 0),
     backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
   }], { extra: { plugins: { tooltip: { callbacks: { label: ctx => `Élim. moy. : ${ctx.parsed.y}` } } } } });
 
@@ -1287,12 +1305,12 @@ function openEditGame(gameId) {
         <input type="hidden" id="er_${i}_hero" value="${r.hero||''}">
       </div>
       <div class="form-grid" style="grid-template-columns:1fr;gap:.4rem">
-        <div class="field"><label>Position finale</label>${stepperHTML(`er_${i}_classement`, r.classement||1, 0.5, 1, 5, false)}</div>
-        <div class="field"><label>Concentration de fin</label>${stepperHTML(`er_${i}_pdc`, r.pdcFin??0, 1, 0, 30, true)}</div>
-        <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`er_${i}_cartes`, r.nbCartes??0, 1, 0, 99, false)}</div>
-        <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`er_${i}_elim`, r.eliminations??0, 1, 0, 99, false)}</div>
-        <div class="field"><label>Élim. cristaux 💎</label>${stepperHTML(`er_${i}_elimc`, r.elimCristaux??0, 1, 0, 99, false)}</div>
-        <div class="field"><label>Cartes bannies</label>${stepperHTML(`er_${i}_bans`, r.nbBans??0, 1, 0, 99, false)}</div>
+        ${nrFieldHTML('Position finale', `er_${i}_classement`, r.classement??1, 0.5, 1, 5, false)}
+        ${nrFieldHTML('Concentration de fin', `er_${i}_pdc`, r.pdcFin??0, 1, 0, 30, true)}
+        ${nrFieldHTML('Cartes dans le deck', `er_${i}_cartes`, r.nbCartes??0, 1, 0, 99, false)}
+        ${nrFieldHTML('Éliminations joueurs', `er_${i}_elim`, r.eliminations??0, 1, 0, 99, false)}
+        ${nrFieldHTML('Élim. cristaux 💎', `er_${i}_elimc`, r.elimCristaux??0, 1, 0, 99, false)}
+        ${nrFieldHTML('Cartes bannies', `er_${i}_bans`, r.nbBans??0, 1, 0, 99, false)}
         <div class="field">
           <label>Résultat</label>
           <div class="result-picker">
@@ -1352,12 +1370,12 @@ function saveEditGame() {
   g.notes = document.getElementById('edit-notes').value.trim();
   g.results.forEach((r, i) => {
     r.hero         = document.getElementById(`er_${i}_hero`).value || null;
-    r.classement   = parseFloat(document.getElementById(`er_${i}_classement`).value) || 1;
-    r.pdcFin       = parseInt(document.getElementById(`er_${i}_pdc`).value)  || 0;
-    r.nbCartes     = parseInt(document.getElementById(`er_${i}_cartes`).value)|| 0;
-    r.eliminations = parseInt(document.getElementById(`er_${i}_elim`).value)   || 0;
-    r.elimCristaux = parseInt(document.getElementById(`er_${i}_elimc`).value)  || 0;
-    r.nbBans       = parseInt(document.getElementById(`er_${i}_bans`).value)   || 0;
+    r.classement   = getValOrNull(`er_${i}_classement`);
+    r.pdcFin       = getValOrNull(`er_${i}_pdc`);
+    r.nbCartes     = getValOrNull(`er_${i}_cartes`);
+    r.eliminations = getValOrNull(`er_${i}_elim`);
+    r.elimCristaux = getValOrNull(`er_${i}_elimc`);
+    r.nbBans       = getValOrNull(`er_${i}_bans`);
     const rt = document.getElementById(`er_${i}_result`).value;
     r.victoire     = rt !== 'defeat';
     r.typeVictoire = rt === 'crist' ? 'cristallisation' : rt === 'elim' ? 'elimination' : null;
@@ -1449,6 +1467,35 @@ function startStep(id, dir, step, min, max) {
 function stopStep() { clearTimeout(_stepTimer); clearInterval(_stepInterval); _stepTimer = null; _stepInterval = null; }
 document.addEventListener('pointerup', stopStep);
 document.addEventListener('pointercancel', stopStep);
+
+function nrFieldHTML(label, id, value, step, min, max, big) {
+  const isNull = value === null || value === undefined;
+  return `<div class="field">
+    <div class="nr-head">
+      <label>${label}</label>
+      <button type="button" class="nr-btn${isNull?' active':''}" onclick="toggleNR('${id}')">N/R</button>
+    </div>
+    <div id="nr-wrap-${id}" class="${isNull?'nr-disabled':''}">
+      ${stepperHTML(id, isNull ? '0' : value, step, min, max, big)}
+    </div>
+  </div>`;
+}
+function toggleNR(inputId) {
+  const wrap = document.getElementById('nr-wrap-' + inputId);
+  const btn = wrap?.previousElementSibling?.querySelector('.nr-btn');
+  if (!wrap || !btn) return;
+  const nowNR = wrap.classList.toggle('nr-disabled');
+  btn.classList.toggle('active', nowNR);
+  const inp = document.getElementById(inputId);
+  if (nowNR) { inp.dataset.saved = inp.value; inp.value = ''; }
+  else { inp.value = inp.dataset.saved ?? '0'; }
+}
+function getValOrNull(inputId) {
+  const wrap = document.getElementById('nr-wrap-' + inputId);
+  if (wrap?.classList.contains('nr-disabled')) return null;
+  const v = parseFloat(document.getElementById(inputId)?.value);
+  return isNaN(v) ? null : v;
+}
 
 function stepperHTML(id, value, step, min, max, big) {
   const cls = big ? 'stepper big' : 'stepper';
@@ -1721,12 +1768,12 @@ function renderNewGameForm() {
       </div>
 
       <div class="form-grid">
-        <div class="field"><label>Position finale (1 = 1er ↑ mieux)</label>${stepperHTML(`r_${i}_classement`, '1', 0.5, 1, 5, false)}</div>
-        <div class="field"><label>Concentration de fin</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 30, true)}</div>
-        <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`r_${i}_cartes`, '0', 1, 0, 99, false)}</div>
-        <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`r_${i}_elim`, '0', 1, 0, 99, false)}</div>
-        <div class="field"><label>Élim. cristaux 💎</label>${stepperHTML(`r_${i}_elimc`, '0', 1, 0, 99, false)}</div>
-        <div class="field"><label>Cartes bannies</label>${stepperHTML(`r_${i}_bans`, '0', 1, 0, 99, false)}</div>
+        ${nrFieldHTML('Position finale (1 = 1er ↑)', `r_${i}_classement`, 1, 0.5, 1, 5, false)}
+        ${nrFieldHTML('Concentration de fin', `r_${i}_pdc`, 0, 1, 0, 30, true)}
+        ${nrFieldHTML('Cartes dans le deck', `r_${i}_cartes`, 0, 1, 0, 99, false)}
+        ${nrFieldHTML('Éliminations joueurs', `r_${i}_elim`, 0, 1, 0, 99, false)}
+        ${nrFieldHTML('Élim. cristaux 💎', `r_${i}_elimc`, 0, 1, 0, 99, false)}
+        ${nrFieldHTML('Cartes bannies', `r_${i}_bans`, 0, 1, 0, 99, false)}
         <div class="field">
           <label>Résultat</label>
           <div class="result-picker">
@@ -1761,21 +1808,19 @@ function saveGame() {
   const results = [];
   for (let i = 0; i < data.players.length; i++) {
     const p = data.players[i];
-    const classement = parseFloat(document.getElementById(`r_${i}_classement`).value);
-    const pdc = parseInt(document.getElementById(`r_${i}_pdc`).value);
-    if (isNaN(classement) || isNaN(pdc)) { toast(`Remplir position et Pdc pour ${p.name}.`); return; }
-    const resultType = document.getElementById(`r_${i}_result`).value; // 'defeat'|'crist'|'elim'
+    const resultType = document.getElementById(`r_${i}_result`).value;
     const victoire = resultType !== 'defeat';
     const typeVictoire = resultType === 'crist' ? 'cristallisation' : resultType === 'elim' ? 'elimination' : null;
     results.push({
       player: p.name,
       hero: document.getElementById(`r_${i}_hero`).value || null,
-      eliminations: parseInt(document.getElementById(`r_${i}_elim`).value)||0,
-      elimCristaux: parseInt(document.getElementById(`r_${i}_elimc`).value)||0,
+      eliminations: getValOrNull(`r_${i}_elim`),
+      elimCristaux: getValOrNull(`r_${i}_elimc`),
       victoire, typeVictoire,
-      classement, pdcFin: pdc,
-      nbCartes: parseInt(document.getElementById(`r_${i}_cartes`).value)||0,
-      nbBans: parseInt(document.getElementById(`r_${i}_bans`).value)||0,
+      classement: getValOrNull(`r_${i}_classement`),
+      pdcFin:     getValOrNull(`r_${i}_pdc`),
+      nbCartes:   getValOrNull(`r_${i}_cartes`),
+      nbBans:     getValOrNull(`r_${i}_bans`),
       mvp: document.getElementById(`r_${i}_mvp`).checked,
       lvp: document.getElementById(`r_${i}_lvp`).checked,
     });
