@@ -268,7 +268,7 @@
   .edit-modal.open { opacity: 1; pointer-events: all; }
   .edit-modal-box {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 18px; width: 100%; max-width: 860px;
+    border-radius: 18px; width: 100%; max-width: 1100px;
     animation: slideUp .28s cubic-bezier(.34,1.56,.64,1);
   }
   @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -1278,15 +1278,15 @@ function openEditGame(gameId) {
         <div class="hero-pick-name" style="background:rgba(0,0,0,.5);color:${h.color}">${h.name}</div>
       </div>`).join('');
     const rt = r.typeVictoire === 'cristallisation' ? 'crist' : r.typeVictoire === 'elimination' ? 'elim' : 'defeat';
-    return `<div class="player-form-block" style="--player-color:${p.color}">
+    return `<div class="player-form-block" style="--player-color:${p.color};padding:.7rem .7rem .6rem;margin-bottom:0">
       <svg class="block-gem" viewBox="0 0 22 25" fill="none"><path d="M11 0 L22 7 L22 18 L11 25 L0 18 L0 7 Z" fill="${p.color}"/><path d="M11 4 L18 9 L18 16 L11 21 L4 16 L4 9 Z" fill="rgba(255,255,255,0.15)"/><path d="M11 8 L15 11 L11 17 L7 11 Z" fill="rgba(255,255,255,0.4)"/></svg>
-      <div class="player-form-title" style="color:${p.color}">${p.name}</div>
-      <div class="field" style="margin-bottom:.9rem">
+      <div class="player-form-title" style="color:${p.color};font-size:.9rem">${p.name}</div>
+      <div class="field" style="margin-bottom:.6rem">
         <label>Héros joué</label>
         <div class="hero-picker">${heroPickerHTML}</div>
         <input type="hidden" id="er_${i}_hero" value="${r.hero||''}">
       </div>
-      <div class="form-grid">
+      <div class="form-grid" style="grid-template-columns:1fr;gap:.4rem">
         <div class="field"><label>Position finale</label>${stepperHTML(`er_${i}_classement`, r.classement||1, 0.5, 1, 5, false)}</div>
         <div class="field"><label>Concentration de fin</label>${stepperHTML(`er_${i}_pdc`, r.pdcFin??0, 1, 0, 30, true)}</div>
         <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`er_${i}_cartes`, r.nbCartes??0, 1, 0, 99, false)}</div>
@@ -1837,7 +1837,7 @@ renderDashboard();
         <div class="field"><label>Date</label><input type="date" id="edit-date"></div>
         <div class="field"><label>Notes</label><input type="text" id="edit-notes" placeholder="Notes…"></div>
       </div>
-      <div id="edit-player-forms" class="form-grid"></div>
+      <div id="edit-player-forms" class="form-grid" style="grid-template-columns:repeat(4,1fr);gap:.6rem"></div>
     </div>
     <div class="edit-modal-foot">
       <button class="btn-cancel" onclick="closeEditModal()">Annuler</button>
