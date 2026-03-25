@@ -1564,8 +1564,8 @@ function renderNewGameForm() {
       </div>
 
       <div class="form-grid">
-        <div class="field"><label>Position finale (1 = 1er ↑ mieux)</label>${stepperHTML(`r_${i}_classement`, '1', 1, 1, 5, false)}</div>
-        <div class="field"><label>Concentration de fin</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 5, true)}</div>
+        <div class="field"><label>Position finale (1 = 1er ↑ mieux)</label>${stepperHTML(`r_${i}_classement`, '1', 0.5, 1, 5, false)}</div>
+        <div class="field"><label>Concentration de fin</label>${stepperHTML(`r_${i}_pdc`, '0', 1, 0, 30, true)}</div>
         <div class="field"><label>Cartes dans le deck</label>${stepperHTML(`r_${i}_cartes`, '0', 1, 0, 99, false)}</div>
         <div class="field"><label>Éliminations joueurs</label>${stepperHTML(`r_${i}_elim`, '0', 1, 0, 99, false)}</div>
         <div class="field">
