@@ -768,7 +768,7 @@
   /* ── Chart layout ── */
   .chart-card-wide { grid-column: span 2; }
   .chart-wrap { position: relative; height: 220px; }
-  .chart-wrap-tall { height: 320px; position: relative; }
+  .chart-wrap-tall { height: 360px; position: relative; }
   .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; margin-bottom: 2rem; }
 
   .btn-new-party {
@@ -911,12 +911,12 @@
       <div id="stats-table-wrap" style="margin-bottom:2rem"></div>
       <div class="sub-section-title">Comparaisons joueurs</div>
       <div class="charts-grid">
-        <div class="chart-card chart-card-wide"><h3>🎮 Gameplay</h3><div class="chart-wrap-tall"><canvas id="chart-radar"></canvas></div></div>
         <div class="chart-card"><h3>🏆 Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
         <div class="chart-card"><h3>💎⚔️ Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
         <div class="chart-card"><h3>⚔️ Éliminations (moy.)</h3><div class="chart-wrap"><canvas id="chart-elim"></canvas></div></div>
-        <div class="chart-card chart-card-wide"><h3>📈 Évolution du classement</h3><div class="chart-wrap-tall"><canvas id="chart-rank-evo"></canvas></div></div>
-        <div class="chart-card chart-card-wide"><h3>🔮 Évolution de la concentration</h3><div class="chart-wrap-tall"><canvas id="chart-pdc-evo"></canvas></div></div>
+        <div class="chart-card chart-card-wide"><h3>📈 Évolution du classement <em style="font-size:.7rem;color:var(--text-muted)">↑ mieux</em></h3><div class="chart-wrap-tall"><canvas id="chart-rank-evo"></canvas></div></div>
+        <div class="chart-card chart-card-wide"><h3>🔮 Évolution de la concentration <em style="font-size:.7rem;color:var(--text-muted)">↑ mieux</em></h3><div class="chart-wrap-tall"><canvas id="chart-pdc-evo"></canvas></div></div>
+        <div class="chart-card chart-card-wide"><h3>🎮 Gameplay</h3><div class="chart-wrap-tall"><canvas id="chart-radar"></canvas></div></div>
       </div>
     </div>
 
@@ -1512,19 +1512,25 @@ function renderDashboard() {
   const gameLabels  = gamesSorted.map((g,i)=>`P${i+1}${g.notes?' – '+g.notes.slice(0,18):''}`);
   if (charts['chart-rank-evo']) charts['chart-rank-evo'].destroy();
   const reCtx = document.getElementById('chart-rank-evo')?.getContext('2d');
+  const nPl = data.players.length || 4;
   if (reCtx) charts['chart-rank-evo'] = new Chart(reCtx, {
     type:'line',
     data:{ labels:gameLabels, datasets: allP.map(p=>({
       label:p.name,
-      data: gamesSorted.map(g=>{ const r=g.results.find(r2=>r2.player===p.name); return r?.classement??null; }),
-      borderColor:p.color, backgroundColor:alpha(p.color,.08), tension:.4, borderWidth:2.5,
-      pointBackgroundColor:p.color, pointBorderColor:'#fff', pointRadius:5, pointHoverRadius:7, fill:false, spanGaps:false
+      data: gamesSorted.map(g=>{ const r=g.results.find(r2=>r2.player===p.name); return r?.classement!=null ? parseFloat((nPl+1-r.classement).toFixed(2)) : null; }),
+      borderColor:p.color, backgroundColor:alpha(p.color,.08), tension:.35, borderWidth:2.5,
+      pointBackgroundColor:p.color, pointBorderColor:'#fff', pointBorderWidth:2, pointRadius:6, pointHoverRadius:8, fill:false, spanGaps:false
     })) },
     options:{ responsive:true, maintainAspectRatio:false, animation:{duration:1000,easing:'easeInOutQuart'},
-      plugins:{ legend:{ display:true, labels:{color:'#a0a0c0',usePointStyle:true,font:{size:11}} } },
+      clip:false,
+      layout:{ padding:{ top:16, right:16, bottom:8, left:8 } },
+      plugins:{ legend:{ display:true, labels:{color:'#a0a0c0',usePointStyle:true,font:{size:11}} },
+        tooltip:{ callbacks:{ label: ctx => { const cl = parseFloat((nPl+1-ctx.parsed.y).toFixed(2)); return `${ctx.dataset.label} : #${cl}`; } } } },
       scales:{ x:{ticks:{color:'#7878a0'},grid:{color:'rgba(42,42,80,.35)'}},
-               y:{reverse:true, min:1, ticks:{color:'#7878a0',stepSize:1}, grid:{color:'rgba(42,42,80,.35)'},
-                  title:{display:true,text:'Classement (1 = meilleur)',color:'#7878a0'}} } }
+               y:{ min:0, max:nPl+0.5, ticks:{color:'#7878a0',stepSize:1,
+                    callback: v => v>0&&v<=nPl ? '#'+(nPl+1-v) : ''},
+                   grid:{color:'rgba(42,42,80,.35)'},
+                   title:{display:true,text:'Position (haut = meilleur)',color:'#7878a0'}} } }
   });
 
   // Line — concentration evolution per game
@@ -1535,13 +1541,16 @@ function renderDashboard() {
     data:{ labels:gameLabels, datasets: allP.map(p=>({
       label:p.name,
       data: gamesSorted.map(g=>{ const r=g.results.find(r2=>r2.player===p.name); return r?.pdcFin??null; }),
-      borderColor:p.color, backgroundColor:alpha(p.color,.08), tension:.4, borderWidth:2.5,
-      pointBackgroundColor:p.color, pointBorderColor:'#fff', pointRadius:5, pointHoverRadius:7, fill:false, spanGaps:false
+      borderColor:p.color, backgroundColor:alpha(p.color,.08), tension:.35, borderWidth:2.5,
+      pointBackgroundColor:p.color, pointBorderColor:'#fff', pointBorderWidth:2, pointRadius:6, pointHoverRadius:8, fill:false, spanGaps:false
     })) },
     options:{ responsive:true, maintainAspectRatio:false, animation:{duration:1000,easing:'easeInOutQuart'},
-      plugins:{ legend:{ display:true, labels:{color:'#a0a0c0',usePointStyle:true,font:{size:11}} } },
+      clip:false,
+      layout:{ padding:{ top:16, right:16, bottom:8, left:8 } },
+      plugins:{ legend:{ display:true, labels:{color:'#a0a0c0',usePointStyle:true,font:{size:11}} },
+        tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label} : ${ctx.parsed.y} conc.` } } },
       scales:{ x:{ticks:{color:'#7878a0'},grid:{color:'rgba(42,42,80,.35)'}},
-               y:{min:0,max:30, ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'},
+               y:{min:0, max:32, ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'},
                   title:{display:true,text:'Concentration de fin',color:'#7878a0'}} } }
   });
 
