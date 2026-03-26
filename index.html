@@ -794,6 +794,7 @@
       <button onclick="showPage('wheel')">🎲 Roue</button>
       <button onclick="showPage('settings')">Joueurs</button>
     </nav>
+    <span id="sync-indicator" title="" style="font-size:.95rem;cursor:default;opacity:.75;padding:.2rem"></span>
     <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()" title="Mode clair / sombre">☀️</button>
   </div>
 </header>
@@ -901,6 +902,9 @@
         <button class="btn btn-primary" onclick="addPlayer()">Ajouter</button>
       </div>
     </div>
+
+    <div class="section-title">Sync cloud</div>
+    <div class="form-card" id="gist-sync-card"></div>
   </div>
 
 </main>
@@ -961,8 +965,104 @@ function loadData() {
   try { const r = localStorage.getItem('shards-data'); return r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_DATA)); }
   catch { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
 }
-function saveData(d) { localStorage.setItem('shards-data', JSON.stringify(d)); }
+function saveDataLocal(d) { localStorage.setItem('shards-data', JSON.stringify(d)); }
+function saveData(d) {
+  saveDataLocal(d);
+  pushToGist(d);
+}
 let data = loadData();
+
+// =========================================================
+// GIST SYNC
+// =========================================================
+const GIST_FILE = 'shards-stats.json';
+function gistCfg() {
+  return { pat: localStorage.getItem('shards-gist-pat')||'', id: localStorage.getItem('shards-gist-id')||'' };
+}
+function setSyncStatus(s) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  const map = { ok:'☁️', syncing:'🔄', error:'⚠️', off:'' };
+  el.textContent = map[s]||'';
+  el.title = { ok:'Sync OK', syncing:'Synchronisation…', error:'Erreur de sync', off:'' }[s]||'';
+  el.dataset.status = s;
+}
+async function pushToGist(d) {
+  const {pat,id} = gistCfg();
+  if (!pat||!id) return;
+  setSyncStatus('syncing');
+  try {
+    const r = await fetch(`https://api.github.com/gists/${id}`, {
+      method:'PATCH',
+      headers:{'Authorization':`token ${pat}`,'Content-Type':'application/json'},
+      body: JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(d)}}})
+    });
+    setSyncStatus(r.ok ? 'ok' : 'error');
+  } catch { setSyncStatus('error'); }
+}
+async function pullFromGist() {
+  const {pat,id} = gistCfg();
+  if (!pat||!id) return false;
+  setSyncStatus('syncing');
+  try {
+    const r = await fetch(`https://api.github.com/gists/${id}`,{headers:{'Authorization':`token ${pat}`}});
+    if (!r.ok) { setSyncStatus('error'); return false; }
+    const gist = await r.json();
+    const content = gist.files?.[GIST_FILE]?.content;
+    if (content) {
+      data = JSON.parse(content);
+      saveDataLocal(data);
+      setSyncStatus('ok');
+      return true;
+    }
+    setSyncStatus('ok'); return false;
+  } catch { setSyncStatus('error'); return false; }
+}
+async function createGist() {
+  const pat = document.getElementById('gist-pat-input')?.value.trim();
+  if (!pat) { toast('PAT requis'); return; }
+  setSyncStatus('syncing');
+  try {
+    const r = await fetch('https://api.github.com/gists',{
+      method:'POST',
+      headers:{'Authorization':`token ${pat}`,'Content-Type':'application/json'},
+      body: JSON.stringify({description:'Shards of Infinity — Stats',public:false,
+        files:{[GIST_FILE]:{content:JSON.stringify(data)}}})
+    });
+    if (!r.ok) throw new Error();
+    const gist = await r.json();
+    localStorage.setItem('shards-gist-pat', pat);
+    localStorage.setItem('shards-gist-id', gist.id);
+    document.getElementById('gist-id-input').value = gist.id;
+    setSyncStatus('ok');
+    toast('Gist créé et sync activée ✓');
+    renderSettings();
+  } catch { setSyncStatus('error'); toast('Erreur — vérifie le PAT (scope "gist" requis)'); }
+}
+async function connectGist() {
+  const pat = document.getElementById('gist-pat-input')?.value.trim();
+  const id  = document.getElementById('gist-id-input')?.value.trim();
+  if (!pat||!id) { toast('PAT et Gist ID requis'); return; }
+  localStorage.setItem('shards-gist-pat', pat);
+  localStorage.setItem('shards-gist-id', id);
+  const ok = await pullFromGist();
+  if (ok) { toast('Connecté et données récupérées ✓'); renderDashboard(); }
+  else    { toast('Connecté (Gist vide, données locales conservées)'); }
+  renderSettings();
+}
+async function forcePull() {
+  const ok = await pullFromGist();
+  if (ok) { toast('Données récupérées du Gist ✓'); renderDashboard(); }
+  else    { toast('Rien à récupérer'); }
+}
+async function forcePush() { await pushToGist(data); toast('Données envoyées vers le Gist ✓'); }
+function disconnectGist() {
+  if (!confirm('Déconnecter la sync Gist ? Les données locales sont conservées.')) return;
+  localStorage.removeItem('shards-gist-pat');
+  localStorage.removeItem('shards-gist-id');
+  setSyncStatus('off');
+  renderSettings(); toast('Sync déconnectée.');
+}
 
 // =========================================================
 // NAVIGATION
@@ -1843,6 +1943,36 @@ function renderSettings() {
       <span>${p.name}</span>
       <button class="remove-player" onclick="removePlayer(${i})" title="Retirer">✕</button>
     </div>`).join('');
+
+  const {pat,id} = gistCfg();
+  const connected = !!(pat && id);
+  document.getElementById('gist-sync-card').innerHTML = connected ? `
+    <div class="form-section-title">☁️ Gist connecté</div>
+    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem;word-break:break-all">
+      ID : <code style="color:var(--accent2)">${id}</code>
+    </div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="forcePull()">↓ Récupérer</button>
+      <button class="btn btn-primary" onclick="forcePush()">↑ Envoyer</button>
+      <button class="btn" onclick="disconnectGist()" style="border-color:var(--loss);color:var(--loss)">Déconnecter</button>
+    </div>` : `
+    <div class="form-section-title">☁️ Configurer la sync GitHub Gist</div>
+    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
+      Les données seront automatiquement partagées entre tous les appareils.<br>
+      Créez un PAT sur <strong>github.com → Settings → Developer settings → Personal access tokens</strong> avec le scope <code>gist</code>.
+    </p>
+    <div class="field" style="margin-bottom:.8rem">
+      <label>GitHub Personal Access Token</label>
+      <input type="password" id="gist-pat-input" placeholder="ghp_…" autocomplete="off">
+    </div>
+    <div class="field" style="margin-bottom:1rem">
+      <label>Gist ID existant <span style="opacity:.5">(laisser vide pour en créer un nouveau)</span></label>
+      <input type="text" id="gist-id-input" placeholder="Optionnel">
+    </div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="connectGist()">Connecter un Gist existant</button>
+      <button class="btn btn-primary" onclick="createGist()">Créer un nouveau Gist</button>
+    </div>`;
 }
 function addPlayer() {
   const name = document.getElementById('new-player-name').value.trim();
@@ -1871,6 +2001,13 @@ function toast(msg) {
 // INIT
 // =========================================================
 renderDashboard();
+// Auto-pull from Gist if configured
+(async () => {
+  if (gistCfg().pat && gistCfg().id) {
+    const refreshed = await pullFromGist();
+    if (refreshed) renderDashboard();
+  }
+})();
 </script>
 
 <!-- EDIT MODAL -->
