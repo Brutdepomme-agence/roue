@@ -1995,6 +1995,8 @@ renderDashboard();
 (async () => {
   const refreshed = await pullFromRepo();
   if (refreshed) renderDashboard();
+  // If PAT is configured but data.json missing, push now to create it
+  else if (repoPat()) { await pushToRepo(data); }
 })();
 </script>
 
