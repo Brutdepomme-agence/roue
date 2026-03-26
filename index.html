@@ -1507,17 +1507,33 @@ function renderDashboard() {
     backgroundColor: colors.map(c=>alpha(c,.65)), borderColor:colors, borderWidth:2, borderRadius:7
   }], { extra:{ plugins:{legend:{display:false}} } });
 
-  // Line — rank evolution per game
+  // Line — cumulative leaderboard rank evolution
   const gamesSorted = [...data.games].sort((a,b)=>a.date.localeCompare(b.date));
   const gameLabels  = gamesSorted.map((g,i)=>`P${i+1}${g.notes?' – '+g.notes.slice(0,18):''}`);
+  const nPl = data.players.length || 4;
+
+  // Compute cumulative avg classement per player then leaderboard position after each game
+  const _reAcc = allP.map(() => ({ tot:0, cnt:0 }));
+  const _rePos  = allP.map(() => []);
+  gamesSorted.forEach(g => {
+    allP.forEach((p,pi) => {
+      const r = g.results.find(r2=>r2.player===p.name);
+      if (r?.classement!=null){ _reAcc[pi].tot += r.classement; _reAcc[pi].cnt++; }
+    });
+    // rank players who have played (lower avg = better = rank 1)
+    const withAvg = allP.map((p,pi)=> _reAcc[pi].cnt>0 ? {pi, avg:_reAcc[pi].tot/_reAcc[pi].cnt} : null).filter(Boolean);
+    withAvg.sort((a,b)=>a.avg-b.avg);
+    const posMap = Object.fromEntries(withAvg.map((x,rank)=>[x.pi, rank+1]));
+    allP.forEach((_,pi) => _rePos[pi].push(posMap[pi]!=null ? nPl+1-posMap[pi] : null));
+  });
+
   if (charts['chart-rank-evo']) charts['chart-rank-evo'].destroy();
   const reCtx = document.getElementById('chart-rank-evo')?.getContext('2d');
-  const nPl = data.players.length || 4;
   if (reCtx) charts['chart-rank-evo'] = new Chart(reCtx, {
     type:'line',
-    data:{ labels:gameLabels, datasets: allP.map(p=>({
+    data:{ labels:gameLabels, datasets: allP.map((p,pi)=>({
       label:p.name,
-      data: gamesSorted.map(g=>{ const r=g.results.find(r2=>r2.player===p.name); return r?.classement!=null ? parseFloat((nPl+1-r.classement).toFixed(2)) : null; }),
+      data: _rePos[pi],
       borderColor:p.color, backgroundColor:alpha(p.color,.08), tension:.35, borderWidth:2.5,
       pointBackgroundColor:p.color, pointBorderColor:'#fff', pointBorderWidth:2, pointRadius:6, pointHoverRadius:8, fill:false, spanGaps:false
     })) },
@@ -1525,22 +1541,32 @@ function renderDashboard() {
       clip:false,
       layout:{ padding:{ top:16, right:16, bottom:8, left:8 } },
       plugins:{ legend:{ display:true, labels:{color:'#a0a0c0',usePointStyle:true,font:{size:11}} },
-        tooltip:{ callbacks:{ label: ctx => { const cl = parseFloat((nPl+1-ctx.parsed.y).toFixed(2)); return `${ctx.dataset.label} : #${cl}`; } } } },
+        tooltip:{ callbacks:{ label: ctx => { const pos = nPl+1-ctx.parsed.y; return `${ctx.dataset.label} : #${pos}`; } } } },
       scales:{ x:{ticks:{color:'#7878a0'},grid:{color:'rgba(42,42,80,.35)'}},
                y:{ min:0, max:nPl+0.5, ticks:{color:'#7878a0',stepSize:1,
                     callback: v => v>0&&v<=nPl ? '#'+(nPl+1-v) : ''},
                    grid:{color:'rgba(42,42,80,.35)'},
-                   title:{display:true,text:'Position (haut = meilleur)',color:'#7878a0'}} } }
+                   title:{display:true,text:'Classement général (haut = meilleur)',color:'#7878a0'}} } }
   });
 
-  // Line — concentration evolution per game
+  // Line — cumulative average concentration evolution
+  const _peAcc = allP.map(() => ({ tot:0, cnt:0 }));
+  const _peAvg  = allP.map(() => []);
+  gamesSorted.forEach(g => {
+    allP.forEach((p,pi) => {
+      const r = g.results.find(r2=>r2.player===p.name);
+      if (r?.pdcFin!=null){ _peAcc[pi].tot += r.pdcFin; _peAcc[pi].cnt++; }
+    });
+    allP.forEach((_,pi) => _peAvg[pi].push(_peAcc[pi].cnt>0 ? parseFloat((_peAcc[pi].tot/_peAcc[pi].cnt).toFixed(1)) : null));
+  });
+
   if (charts['chart-pdc-evo']) charts['chart-pdc-evo'].destroy();
   const peCtx = document.getElementById('chart-pdc-evo')?.getContext('2d');
   if (peCtx) charts['chart-pdc-evo'] = new Chart(peCtx, {
     type:'line',
-    data:{ labels:gameLabels, datasets: allP.map(p=>({
+    data:{ labels:gameLabels, datasets: allP.map((p,pi)=>({
       label:p.name,
-      data: gamesSorted.map(g=>{ const r=g.results.find(r2=>r2.player===p.name); return r?.pdcFin??null; }),
+      data: _peAvg[pi],
       borderColor:p.color, backgroundColor:alpha(p.color,.08), tension:.35, borderWidth:2.5,
       pointBackgroundColor:p.color, pointBorderColor:'#fff', pointBorderWidth:2, pointRadius:6, pointHoverRadius:8, fill:false, spanGaps:false
     })) },
@@ -1548,10 +1574,10 @@ function renderDashboard() {
       clip:false,
       layout:{ padding:{ top:16, right:16, bottom:8, left:8 } },
       plugins:{ legend:{ display:true, labels:{color:'#a0a0c0',usePointStyle:true,font:{size:11}} },
-        tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label} : ${ctx.parsed.y} conc.` } } },
+        tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label} : ${ctx.parsed.y} (moy. cumul.)` } } },
       scales:{ x:{ticks:{color:'#7878a0'},grid:{color:'rgba(42,42,80,.35)'}},
                y:{min:0, max:32, ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'},
-                  title:{display:true,text:'Concentration de fin',color:'#7878a0'}} } }
+                  title:{display:true,text:'Concentration moyenne cumulative',color:'#7878a0'}} } }
   });
 
   // Statistiques table
