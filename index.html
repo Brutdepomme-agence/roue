@@ -2028,15 +2028,15 @@ function spinDrum() {
   const n = data.players.length; if (!n) { _drumSpinning = false; return; }
   const winner = Math.floor(Math.random() * n);
 
-  // Smooth timing schedule: acceleration → plateau → long soft deceleration
+  // Timing: ramp up → plateau → smooth decel — total ~5.5s
   const sched = [];
-  for (let i = 0; i < 16; i++) sched.push(Math.round(38 + i * 1.5));   // ramp up
-  for (let i = 0; i < 10; i++) sched.push(62);                          // plateau
-  for (let i = 0; i < 32; i++) {                                         // soft decel
-    const t = i / 31;
-    sched.push(Math.round(65 + Math.pow(t, 1.6) * 920));
+  for (let i = 0; i < 8;  i++) sched.push(Math.round(40 + i * 2.5));  // ramp 40→58ms
+  for (let i = 0; i < 6;  i++) sched.push(60);                         // plateau
+  for (let i = 0; i < 12; i++) {                                        // decel 68→520ms
+    const t = i / 11;
+    sched.push(Math.round(68 + Math.pow(t, 1.5) * 452));
   }
-  sched.push(1300, 1800); // final two dramatic slow ticks
+  sched.push(640, 850); // final two slow ticks
 
   const steps = sched.length;
   const startIdx = ((winner - steps) % n + n * 40) % n;
@@ -2048,22 +2048,21 @@ function spinDrum() {
   function tick() {
     const idx = (startIdx - 1 + step) % n;
     const dur  = sched[step] || 62;
-    const isSpinning = step < (16 + 10 + 8); // blur during fast phase
+    const isSpinning = step < (8 + 6 + 4); // blur during fast phase
 
     if (step === steps) {
-      // Final: ensure winner is displayed cleanly
+      // Final: smooth settle on winner
       _buildDrumStrip(winner - 1, false);
-      // One last smooth settle
       const strip = document.getElementById('drum-strip');
       if (strip) {
-        strip.style.transition = 'transform 900ms cubic-bezier(0.16,1,0.3,1)';
+        strip.style.transition = 'transform 600ms cubic-bezier(0.16,1,0.3,1)';
         strip.style.transform  = 'translateY(-80px)';
         setTimeout(() => {
           if (strip) { strip.style.transition = 'none'; strip.style.transform = 'translateY(0)'; }
           _buildDrumStrip(winner, false);
           _drumSpinning = false;
-          setTimeout(() => showWinner(winner), 350);
-        }, 920);
+          setTimeout(() => showWinner(winner), 280);
+        }, 620);
       }
       return;
     }
