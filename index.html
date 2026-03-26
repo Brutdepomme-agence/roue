@@ -492,45 +492,50 @@
   }
   .drum-title { font-size: .72rem; font-weight: 700; letter-spacing: .5em; text-transform: uppercase; color: var(--text-muted); }
 
-  .drum-roll { position: relative; height: 240px; }
+  .drum-roll { position: relative; height: 240px; overflow: hidden; }
   .drum-fade-top, .drum-fade-bot {
-    position: absolute; left: 0; right: 0; height: 72px; z-index: 5; pointer-events: none;
+    position: absolute; left: 0; right: 0; height: 80px; z-index: 5; pointer-events: none;
   }
-  .drum-fade-top { top: 0;    background: linear-gradient(to bottom, rgba(14,4,4,.96), transparent); }
-  .drum-fade-bot { bottom: 0; background: linear-gradient(to top,   rgba(14,4,4,.96), transparent); }
-  .drum-band-side {
-    position: absolute; left: 0; right: 0; height: 72px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; font-weight: 700; letter-spacing: .25em;
-    opacity: .28; pointer-events: none; transition: color .08s;
+  .drum-fade-top { top: 0;    background: linear-gradient(to bottom, rgba(14,4,4,.98) 0%, rgba(14,4,4,.6) 60%, transparent); }
+  .drum-fade-bot { bottom: 0; background: linear-gradient(to top,   rgba(14,4,4,.98) 0%, rgba(14,4,4,.6) 60%, transparent); }
+
+  /* Rolling strip */
+  .drum-track { position: absolute; inset: 0; overflow: hidden; }
+  #drum-strip {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; flex-direction: column;
+    will-change: transform;
+    transform: translateY(0);
   }
-  .drum-band-prev { top: 0; }
-  .drum-band-next { bottom: 0; }
-  .drum-band-center {
-    position: absolute; top: 72px; bottom: 72px; left: 0; right: 0;
-    display: flex; align-items: center; background: rgba(196,27,27,.05);
+  .drum-slot {
+    height: 80px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 1.2rem;
+    padding: 0 2rem;
+    transition: opacity .15s;
   }
+  .drum-slot.ds-side { opacity: .28; }
+  .drum-slot.ds-center { opacity: 1; background: rgba(196,27,27,.04); }
+  .drum-slot.ds-hidden { opacity: 0; pointer-events:none; }
+
+  .ds-avatar {
+    width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    border: 2px solid transparent;
+  }
+  .ds-avatar.ds-av-center { width: 68px; height: 68px; }
+  .ds-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+  .ds-init {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; font-weight: 800;
+  }
+  .ds-name { font-weight: 800; letter-spacing: .18em; }
+  .ds-name.ds-nm-side   { font-size: 1.3rem; }
+  .ds-name.ds-nm-center { font-size: 2.2rem; letter-spacing: .22em; }
+
   .drum-sel-line {
-    position: absolute; left: 1.5rem; right: 1.5rem; height: 1px;
+    position: absolute; left: 1.5rem; right: 1.5rem; height: 1px; z-index: 6;
     background: linear-gradient(90deg, transparent, rgba(196,27,27,.8), rgba(124,92,252,.5), transparent);
   }
-  .drum-sel-top { top: 0; } .drum-sel-bot { bottom: 0; }
-  .drum-center-inner {
-    display: flex; align-items: center; gap: 1.5rem; padding: 0 2rem; width: 100%; height: 100%;
-  }
-  .drum-c-avatar {
-    width: 76px; height: 76px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
-    border: 2px solid transparent; transition: box-shadow .25s;
-  }
-  .drum-c-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
-  .drum-c-init {
-    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-    font-size: 2rem; font-weight: 800; color: white;
-  }
-  .drum-c-name {
-    font-size: 2.5rem; font-weight: 800; letter-spacing: .18em; flex: 1;
-    transition: filter .1s, text-shadow .25s;
-  }
+  .drum-sel-top { top: 80px; } .drum-sel-bot { bottom: 80px; }
 
   /* Scanline overlay on drum */
   .drum-scanlines {
@@ -966,13 +971,11 @@
           <div class="drum-fade-top"></div>
           <div class="drum-fade-bot"></div>
           <div class="drum-scanlines"></div>
-          <div class="drum-band-side drum-band-prev" id="drum-prev"></div>
-          <div class="drum-band-center">
-            <div class="drum-sel-line drum-sel-top"></div>
-            <div id="drum-center-inner" class="drum-center-inner"></div>
-            <div class="drum-sel-line drum-sel-bot"></div>
+          <div class="drum-sel-line drum-sel-top"></div>
+          <div class="drum-sel-line drum-sel-bot"></div>
+          <div class="drum-track">
+            <div id="drum-strip"></div>
           </div>
-          <div class="drum-band-side drum-band-next" id="drum-next"></div>
         </div>
         <!-- Win overlay (inside machine) -->
         <div id="drum-win-overlay" class="drum-win-overlay" onclick="closeDrumWin()">
@@ -1945,7 +1948,7 @@ function hexToRgb(hex) {
 function renderWheel() {
   const players = data.players;
   if (!players.length) return;
-  updateDrumBands(0, false);
+  _buildDrumStrip(0, false);
   const ov = document.getElementById('drum-win-overlay');
   if (ov) ov.classList.remove('active');
   const btn = document.getElementById('btn-drum-spin');
@@ -1953,29 +1956,66 @@ function renderWheel() {
   reshuffleHeroes();
 }
 
-function updateDrumBands(idx, spinning) {
-  const players = data.players;
-  const n = players.length; if (!n) return;
-  const prev = players[(idx-1+n)%n];
-  const curr = players[idx];
-  const next = players[(idx+1)%n];
-  const prevEl = document.getElementById('drum-prev');
-  const nextEl = document.getElementById('drum-next');
-  const cInner = document.getElementById('drum-center-inner');
-  if (prevEl) { prevEl.textContent = prev.name; prevEl.style.color = prev.color; }
-  if (nextEl) { nextEl.textContent = next.name; nextEl.style.color = next.color; }
-  if (!cInner) return;
-  const photo = PLAYER_PHOTOS[curr.name];
-  const blur = spinning ? 'filter:blur(3px);opacity:.6' : '';
-  const glow = spinning ? '' : `text-shadow:0 0 35px ${curr.color},0 0 70px ${curr.color}44`;
-  const avGlow = spinning ? `box-shadow:0 0 8px ${curr.color}44` : `box-shadow:0 0 35px ${curr.color},0 0 60px ${curr.color}44`;
-  cInner.innerHTML = `
-    <div class="drum-c-avatar" style="border-color:${curr.color};${avGlow}">
-      ${photo
-        ? `<img src="${photo}" alt="${curr.name}">`
-        : `<div class="drum-c-init" style="background:${curr.color}22;color:${curr.color}">${curr.name[0]}</div>`}
-    </div>
-    <div class="drum-c-name" style="color:${curr.color};${glow};${blur}">${curr.name}</div>`;
+// Build one slot's HTML
+function _drumSlotHtml(p, role, spinning) {
+  // role: 'center' | 'side' | 'hidden'
+  if (!p) return `<div class="drum-slot ds-hidden"></div>`;
+  const photo = PLAYER_PHOTOS[p.name];
+  const isCenter = role === 'center';
+  const avCls  = isCenter ? 'ds-avatar ds-av-center' : 'ds-avatar';
+  const nmCls  = isCenter ? 'ds-name ds-nm-center' : 'ds-name ds-nm-side';
+  const slotCls = role === 'hidden' ? 'drum-slot ds-hidden'
+                : isCenter           ? 'drum-slot ds-center'
+                                     : 'drum-slot ds-side';
+  const avGlow = isCenter && !spinning ? `box-shadow:0 0 28px ${p.color},0 0 55px ${p.color}44` : '';
+  const nmGlow = isCenter && !spinning ? `text-shadow:0 0 28px ${p.color}` : '';
+  const avHtml = photo
+    ? `<img src="${photo}" alt="${p.name}">`
+    : `<div class="ds-init" style="background:${p.color}22;color:${p.color}">${p.name[0]}</div>`;
+  return `<div class="${slotCls}">
+    <div class="${avCls}" style="border-color:${p.color};${avGlow}">${avHtml}</div>
+    <div class="${nmCls}" style="color:${p.color};${nmGlow}">${p.name}</div>
+  </div>`;
+}
+
+// Rebuild the strip (4 slots: hidden-above, prev, center, next) at translateY(0)
+// Slot layout: [0]=hidden(above), [1]=prev, [2]=center, [3]=next — strip 320px tall
+// translateY(0) → shows slots 0,1,2 in the 240px drum; slot 3 hidden below
+// translateY(-80px) → shows slots 1,2,3 — used during animation
+function _buildDrumStrip(idx, spinning) {
+  const players = data.players; const n = players.length;
+  const pp   = players[((idx-2)%n+n)%n]; // 2 before — hidden slot
+  const prev = players[((idx-1)%n+n)%n];
+  const curr = players[idx % n];
+  const next = players[(idx+1) % n];
+  const strip = document.getElementById('drum-strip');
+  if (!strip) return;
+  strip.innerHTML =
+    _drumSlotHtml(pp,   'hidden',  spinning) +
+    _drumSlotHtml(prev, 'side',    spinning) +
+    _drumSlotHtml(curr, 'center',  spinning) +
+    _drumSlotHtml(next, 'side',    spinning);
+}
+
+function updateDrumBands(idx, stepDuration, spinning) {
+  const strip = document.getElementById('drum-strip');
+  if (!strip) return;
+
+  const dur = Math.max(Math.round(stepDuration * 0.80), 18);
+  const ease = spinning ? 'linear' : 'cubic-bezier(0.22,0.61,0.36,1)';
+
+  // Animate: strip rolls UP by one slot (80px)
+  // Currently at translateY(0): shows [hidden, prev, center, next] → top 3 visible
+  // Animate to translateY(-80px): shows [prev, center, next] and the hidden slot is now at top
+  strip.style.transition = `transform ${dur}ms ${ease}`;
+  strip.style.transform  = 'translateY(-80px)';
+
+  // After animation: snap back and rebuild for new idx
+  setTimeout(() => {
+    strip.style.transition = 'none';
+    strip.style.transform  = 'translateY(0)';
+    _buildDrumStrip(idx + 1, spinning);
+  }, dur + 6);
 }
 
 function spinDrum() {
@@ -1988,27 +2028,49 @@ function spinDrum() {
   const n = data.players.length; if (!n) { _drumSpinning = false; return; }
   const winner = Math.floor(Math.random() * n);
 
-  // Build timing schedule: fast → decelerate → dramatic final
+  // Smooth timing schedule: acceleration → plateau → long soft deceleration
   const sched = [];
-  for (let i=0;i<14;i++) sched.push(35 + i*1.2);         // acceleration phase
-  [70,95,125,165,215,275,345,430,520,620].forEach(t=>sched.push(t)); // decelerate
+  for (let i = 0; i < 16; i++) sched.push(Math.round(38 + i * 1.5));   // ramp up
+  for (let i = 0; i < 10; i++) sched.push(62);                          // plateau
+  for (let i = 0; i < 32; i++) {                                         // soft decel
+    const t = i / 31;
+    sched.push(Math.round(65 + Math.pow(t, 1.6) * 920));
+  }
+  sched.push(1300, 1800); // final two dramatic slow ticks
 
-  // Build index sequence ending on winner
   const steps = sched.length;
-  const startIdx = ((winner - steps) % n + n * 20) % n;
-  let step = 0;
+  const startIdx = ((winner - steps) % n + n * 40) % n;
 
+  // Init strip at startIdx - 1 so first updateDrumBands(startIdx-1) → shows startIdx
+  _buildDrumStrip(startIdx - 1, true);
+
+  let step = 0;
   function tick() {
-    const idx = (startIdx + step) % n;
+    const idx = (startIdx - 1 + step) % n;
+    const dur  = sched[step] || 62;
+    const isSpinning = step < (16 + 10 + 8); // blur during fast phase
+
     if (step === steps) {
-      updateDrumBands(winner, false);
-      _drumSpinning = false;
-      setTimeout(() => showWinner(winner), 200);
+      // Final: ensure winner is displayed cleanly
+      _buildDrumStrip(winner - 1, false);
+      // One last smooth settle
+      const strip = document.getElementById('drum-strip');
+      if (strip) {
+        strip.style.transition = 'transform 900ms cubic-bezier(0.16,1,0.3,1)';
+        strip.style.transform  = 'translateY(-80px)';
+        setTimeout(() => {
+          if (strip) { strip.style.transition = 'none'; strip.style.transform = 'translateY(0)'; }
+          _buildDrumStrip(winner, false);
+          _drumSpinning = false;
+          setTimeout(() => showWinner(winner), 350);
+        }, 920);
+      }
       return;
     }
-    updateDrumBands(idx, step < 20);
+
+    updateDrumBands(idx, dur, isSpinning);
     step++;
-    setTimeout(tick, sched[step-1]);
+    setTimeout(tick, dur);
   }
   tick();
 }
