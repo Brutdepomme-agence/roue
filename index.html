@@ -888,30 +888,32 @@
   <div id="page-dashboard" class="page active">
     <div id="summary-tiles" class="summary-grid"></div>
     <div class="section-title">Classement général</div>
+    <div id="podium-wrap"></div>
     <div id="leaderboard" class="leaderboard"></div>
 
     <!-- ── JOUEURS ───────────────────────────────── -->
-    <div class="dash-block dash-block--player">
+    <div class="dash-block dash-block--player fade-sect">
       <div class="section-title">Stats par joueur</div>
       <div id="player-cards" class="player-grid"></div>
       <div class="sub-section-title">Comparaisons joueurs</div>
       <div class="charts-grid">
-        <div class="chart-card"><h3>Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
-        <div class="chart-card"><h3>Classement moyen <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-rank"></canvas></div></div>
-        <div class="chart-card"><h3>Concentration (moy.)</h3><div class="chart-wrap"><canvas id="chart-pdc"></canvas></div></div>
-        <div class="chart-card"><h3>Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
-        <div class="chart-card"><h3>Éliminations (moy.)</h3><div class="chart-wrap"><canvas id="chart-elim"></canvas></div></div>
+        <div class="chart-card chart-card-wide"><h3>🎯 Profil comparatif</h3><div class="chart-wrap-tall"><canvas id="chart-radar"></canvas></div></div>
+        <div class="chart-card"><h3>🏆 Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
+        <div class="chart-card"><h3>💎⚔️ Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
+        <div class="chart-card"><h3>⚔️ Éliminations (moy.)</h3><div class="chart-wrap"><canvas id="chart-elim"></canvas></div></div>
+        <div class="chart-card chart-card-wide"><h3>📈 Évolution du classement</h3><div class="chart-wrap-tall"><canvas id="chart-rank-evo"></canvas></div></div>
+        <div class="chart-card chart-card-wide"><h3>🔮 Évolution de la concentration</h3><div class="chart-wrap-tall"><canvas id="chart-pdc-evo"></canvas></div></div>
       </div>
     </div>
 
     <!-- ── HÉROS ──────────────────────────────────── -->
-    <div class="dash-block dash-block--hero">
+    <div class="dash-block dash-block--hero fade-sect">
       <div class="section-title">Héros</div>
       <div id="hero-cards-dash" class="hero-cards-grid"></div>
       <div class="sub-section-title">Comparaisons héros</div>
       <div class="charts-grid">
-        <div class="chart-card"><h3>Winrate par héros (%)</h3><div class="chart-wrap"><canvas id="chart-hero-winrate"></canvas></div></div>
-        <div class="chart-card"><h3>Classement moyen héros <em>↑ mieux</em></h3><div class="chart-wrap"><canvas id="chart-hero-rank"></canvas></div></div>
+        <div class="chart-card chart-card-wide"><h3>🌟 Winrate par héros</h3><div class="chart-wrap-tall"><canvas id="chart-hero-winrate"></canvas></div></div>
+        <div class="chart-card chart-card-wide"><h3>🏅 Classement moyen héros <em>↑ mieux</em></h3><div class="chart-wrap-tall"><canvas id="chart-hero-rank"></canvas></div></div>
       </div>
     </div>
 
