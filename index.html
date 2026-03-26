@@ -767,7 +767,19 @@
 
   /* ── Chart layout ── */
   .chart-card-wide { grid-column: span 2; }
-  .chart-wrap-tall { height: 280px; position: relative; }
+  .chart-wrap { position: relative; height: 220px; }
+  .chart-wrap-tall { height: 320px; position: relative; }
+  .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; margin-bottom: 2rem; }
+
+  .btn-new-party {
+    background: linear-gradient(135deg, var(--crimson) 0%, var(--accent) 100%);
+    color: #fff; border: none; border-radius: 8px;
+    padding: .4rem 1.1rem; font-family: inherit; font-weight: 700;
+    font-size: .82rem; letter-spacing: .06em; cursor: pointer;
+    box-shadow: 0 0 14px rgba(196,27,27,.35);
+    transition: opacity .15s, box-shadow .15s;
+  }
+  .btn-new-party:hover { opacity: .88; box-shadow: 0 0 22px rgba(196,27,27,.55); }
 
   /* ── Count-up pop ── */
   @keyframes numPop { 0%{transform:scale(.6) translateY(10px);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1) translateY(0);opacity:1} }
@@ -871,13 +883,13 @@
   </div>
   <div style="display:flex;align-items:center;gap:.5rem">
     <nav>
-      <button class="active" onclick="showPage('dashboard')">Dashboard</button>
+      <button class="active" onclick="showPage('dashboard')">Statistiques</button>
       <button onclick="showPage('history')">Historique</button>
-      <button onclick="showPage('new-game')">+ Nouvelle partie</button>
       <button onclick="showPage('wheel')">🎲 Roue</button>
       <button onclick="showPage('settings')">Joueurs</button>
     </nav>
     <span id="sync-indicator" title="" style="font-size:.95rem;cursor:default;opacity:.75;padding:.2rem"></span>
+    <button class="btn-new-party" onclick="showPage('new-game')">+ Nouvelle partie</button>
     <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()" title="Mode clair / sombre">☀️</button>
   </div>
 </header>
@@ -895,9 +907,11 @@
     <div class="dash-block dash-block--player fade-sect">
       <div class="section-title">Stats par joueur</div>
       <div id="player-cards" class="player-grid"></div>
+      <div class="sub-section-title">Récapitulatif global</div>
+      <div id="stats-table-wrap" style="margin-bottom:2rem"></div>
       <div class="sub-section-title">Comparaisons joueurs</div>
       <div class="charts-grid">
-        <div class="chart-card chart-card-wide"><h3>🎯 Profil comparatif</h3><div class="chart-wrap-tall"><canvas id="chart-radar"></canvas></div></div>
+        <div class="chart-card chart-card-wide"><h3>🎮 Gameplay</h3><div class="chart-wrap-tall"><canvas id="chart-radar"></canvas></div></div>
         <div class="chart-card"><h3>🏆 Victoires</h3><div class="chart-wrap"><canvas id="chart-wins"></canvas></div></div>
         <div class="chart-card"><h3>💎⚔️ Types de victoires</h3><div class="chart-wrap"><canvas id="chart-victype"></canvas></div></div>
         <div class="chart-card"><h3>⚔️ Éliminations (moy.)</h3><div class="chart-wrap"><canvas id="chart-elim"></canvas></div></div>
@@ -917,11 +931,7 @@
       </div>
     </div>
 
-    <!-- ── STATISTIQUES ───────────────────────────── -->
-    <div class="dash-block">
-      <div class="section-title">Statistiques</div>
-      <div id="stats-table-wrap"></div>
-    </div>
+
   </div>
 
   <!-- HISTORY -->
@@ -1444,9 +1454,7 @@ function renderDashboard() {
   mkChart('chart-hero-rank', 'bar', hNames, [{
     data: heroesWithData.map(h => parseFloat((nH + 1 - hStats2[h.name].totalRank/hStats2[h.name].games).toFixed(2))),
     backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
-  }], { extra: { indexAxis:'y', plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>`Classement moy. : #${(nH+1-ctx.parsed.x).toFixed(1)}` } } },
-    scales:{ x:{ max:nH+.5, ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'}, beginAtZero:true },
-             y:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'} } } } });
+  }], { y: { max: nH + 0.5 }, extra: { plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>`Classement moy. : #${(nH+1-ctx.parsed.y).toFixed(1)}` } } } } });
 
   // ── Player charts ─────────────────────────────────────────────────────────
   const names    = ranked.map(p => p.name);
@@ -1454,22 +1462,19 @@ function renderDashboard() {
   const allP     = [...ranked, ...noGamePlayers];
   const nPlayers = data.players.length || 4;
 
-  // Radar — player comparison (all stats normalized 0-100)
-  const radarLabels = ['Victoires %', 'Classement', 'Concentration', 'MVP %', 'Éliminations'];
+  // Radar Gameplay — cartes deck, cartes bannies, concentration (normalized 0-100)
+  const radarLabels = ['Cartes deck', 'Cartes bannies', 'Concentration de fin'];
   const radarDatasets = allP.map(p => {
     const s = stats[p.name] || {};
-    const g = s.games || 1;
     return {
       label: p.name,
       data: [
-        s.games ? s.wins/s.games*100 : 0,
-        s.rankGames ? Math.max(0,(nPlayers+1-s.totalRank/s.rankGames)/nPlayers*100) : 0,
-        s.pdcGames  ? Math.min(s.totalPdc/s.pdcGames/30*100, 100) : 0,
-        s.games     ? s.mvp/s.games*100 : 0,
-        s.elimGames ? Math.min(s.totalElim/s.elimGames/3*100,100) : 0
+        s.cartesGames ? Math.min(s.totalCartes/s.cartesGames/40*100, 100) : 0,
+        s.bansGames   ? Math.min(s.totalBans/s.bansGames/20*100, 100) : 0,
+        s.pdcGames    ? Math.min(s.totalPdc/s.pdcGames/30*100, 100) : 0,
       ].map(v=>parseFloat(v.toFixed(1))),
       backgroundColor: alpha(p.color,.13), borderColor: p.color, borderWidth:2,
-      pointBackgroundColor: p.color, pointBorderColor:'#fff', pointRadius:4, fill:true
+      pointBackgroundColor: p.color, pointBorderColor:'#fff', pointRadius:5, fill:true
     };
   });
   if (charts['chart-radar']) charts['chart-radar'].destroy();
@@ -1486,9 +1491,7 @@ function renderDashboard() {
   mkChart('chart-wins', 'bar', names, [{
     data: names.map(n => stats[n]?.wins||0),
     backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth:2, borderRadius:7
-  }], { extra:{ indexAxis:'y', plugins:{legend:{display:false}},
-    scales:{ x:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'}, beginAtZero:true },
-             y:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'} } } } });
+  }], { extra:{ plugins:{legend:{display:false}} } });
 
   // Stacked bar — win types per player
   mkChart('chart-victype', 'bar', allP.map(p=>p.name), [
@@ -1502,9 +1505,7 @@ function renderDashboard() {
   mkChart('chart-elim', 'bar', names, [{
     data: names.map(n => stats[n]?.elimGames ? parseFloat((stats[n].totalElim/stats[n].elimGames).toFixed(2)) : 0),
     backgroundColor: colors.map(c=>alpha(c,.65)), borderColor:colors, borderWidth:2, borderRadius:7
-  }], { extra:{ indexAxis:'y', plugins:{legend:{display:false}},
-    scales:{ x:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'}, beginAtZero:true },
-             y:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'} } } } });
+  }], { extra:{ plugins:{legend:{display:false}} } });
 
   // Line — rank evolution per game
   const gamesSorted = [...data.games].sort((a,b)=>a.date.localeCompare(b.date));
@@ -1764,10 +1765,11 @@ function renderHistory() {
           <span style="color:${playerColor(r.player)};font-weight:700">${r.player}</span>
           <span class="hero-pill" style="color:${hd.color};border-color:${hd.color}33">${hd.emoji} ${hd.name}</span>
         </td>
-        <td class="${rankClass}">#${r.classement}</td>
-        <td>${r.pdcFin}</td>
-        <td>${r.eliminations}${r.elimCristaux > 0 ? ` +${r.elimCristaux}💎` : ''}</td>
-        <td>${r.nbCartes||'-'} cartes</td>
+        <td class="${rankClass}">${r.classement!=null?'#'+r.classement:'—'}</td>
+        <td>${r.pdcFin??'—'}</td>
+        <td>${r.eliminations!=null?r.eliminations:'—'}${r.elimCristaux > 0 ? ` +${r.elimCristaux}💎` : ''}</td>
+        <td>${r.nbCartes!=null?r.nbCartes+' cartes':'—'}</td>
+        <td>${r.nbBans!=null?r.nbBans:'—'}</td>
         <td>${r.mvp?'<span class="badge badge-mvp">MVP</span>':''}${r.lvp?'<span class="badge badge-lvp">LVP</span>':''}${r.victoire?`<span class="badge badge-win">Victoire</span>${vicBadge}`:''}</td>
       </tr>`;
     }).join('');
@@ -1786,7 +1788,7 @@ function renderHistory() {
       </div>
       <div class="game-body">
         <table class="game-table">
-          <tr><th>Joueur & Héros</th><th>Classement</th><th>Concentration</th><th>Éliminations</th><th>Deck</th><th>Résultat</th></tr>
+          <tr><th>Joueur & Héros</th><th>Classement</th><th>Conc.</th><th>Éliminations</th><th>Deck</th><th>Bans</th><th>Résultat</th></tr>
           ${rows}
         </table>
       </div>
