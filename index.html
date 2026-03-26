@@ -995,6 +995,11 @@ async function pullFromRepo() {
     const r = await fetch(`${RAW_URL}?t=${Date.now()}`);
     if (!r.ok) return false;
     const remote = await r.json();
+    const localGames  = data.games?.length  || 0;
+    const remoteGames = remote.games?.length || 0;
+    // Never overwrite local data with an empty/smaller remote
+    if (remoteGames === 0 && localGames > 0) return false;
+    if (remoteGames < localGames) return false;
     data = remote;
     saveDataLocal(data);
     setSyncStatus('ok');
