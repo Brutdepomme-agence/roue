@@ -1308,13 +1308,13 @@ function renderDashboard() {
       <div class="s-val s-val-anim" style="color:${bestHero ? heroData(bestHero.name).color : 'var(--accent2)'}">
         ${bestHero ? bestHero.name : '—'}
       </div>
-      <div class="s-label">Meilleur héros${bestHeroRate != null ? \` · ${bestHeroRate}% win\` : ''}</div>
+      <div class="s-label">Meilleur héros${bestHeroRate != null ? ` · ${bestHeroRate}% win` : ''}</div>
     </div>
     <div class="summary-tile">
       <div class="s-val s-val-anim" style="color:${bestPlayer?.color||'#fff'}">
         ${bestPlayer?.name||'—'}
       </div>
-      <div class="s-label">Meilleur joueur${bestPlayer ? \` · ${stats[bestPlayer.name].wins} 🏆\` : ''}</div>
+      <div class="s-label">Meilleur joueur${bestPlayer ? ` · ${stats[bestPlayer.name].wins} 🏆` : ''}</div>
     </div>
     <div class="summary-tile">
       <div class="s-val s-val-anim" id="count-elim">0</div>
@@ -1324,11 +1324,11 @@ function renderDashboard() {
       <div class="s-val s-val-anim"><span style="color:var(--accent2)">💎 ${cristWins}</span> <span style="opacity:.4;font-size:.7em">/</span> <span style="color:var(--loss)">⚔️ ${elimWins}</span></div>
       <div class="s-label">Cristallisations · Éliminations</div>
     </div>
-    ${mvpKing ? \`<div class="summary-tile">
+    ${mvpKing ? `<div class="summary-tile">
       <div class="s-val s-val-anim" style="color:var(--gold)">${mvpKing.name}</div>
       <div class="s-label">⭐ MVP king · ${stats[mvpKing.name].mvp} fois</div>
-    </div>\` : ''}
-  \`;
+    </div>` : ''}
+  `;
   setTimeout(()=>{ countUp('count-games', totalGames); countUp('count-elim', totalElim); }, 40);
 
   // Podium (top 3)
