@@ -1003,18 +1003,22 @@ function setSyncStatus(s) {
   el.onclick = (s==='ok'||s==='error') ? ()=>showPage('settings') : null;
 }
 
-async function pullFromRepo() {
+async function pullFromRepo(force = false) {
   try {
     const r = await fetch(`${RAW_URL}?t=${Date.now()}`);
     if (!r.ok) return false;
     const remote = await r.json();
+    if (!remote.games) return false;
     const localGames  = data.games?.length  || 0;
-    const remoteGames = remote.games?.length || 0;
-    // Never overwrite local data with an empty/smaller remote
-    if (remoteGames === 0 && localGames > 0) return false;
-    if (remoteGames < localGames) return false;
+    const remoteGames = remote.games.length;
+    // Safety guards (bypassed when force=true, e.g. manual "Récupérer")
+    if (!force) {
+      if (remoteGames === 0 && localGames > 0) return false;
+      if (remoteGames < localGames) return false;
+    }
+    if (remoteGames === 0 && localGames === 0) return false; // nothing to do
     data = remote;
-    saveDataLocal(data);  // saveDataLocal also saves a backup of the previous state
+    saveDataLocal(data);
     setSyncStatus('ok');
     return true;
   } catch { return false; }
@@ -1079,9 +1083,9 @@ async function connectRepo() {
   } catch(e) { setSyncStatus('error'); toast('Erreur : ' + e.message); }
 }
 async function forcePull() {
-  const ok = await pullFromRepo();
-  if (ok) { toast('Données récupérées ✓'); renderDashboard(); }
-  else toast('Rien à récupérer (data.json absent ?)');
+  const ok = await pullFromRepo(true); // force=true bypasses guards
+  if (ok) { toast('Données récupérées ✓'); renderDashboard(); renderHistory(); }
+  else toast('Impossible de récupérer les données.');
 }
 async function forcePush() { await pushToRepo(data); toast('Données envoyées ✓'); }
 function disconnectRepo() {
@@ -2024,12 +2028,10 @@ function toast(msg) {
 // INIT
 // =========================================================
 renderDashboard();
-// Auto-pull from repo on every load (public, no auth needed)
+// Auto-pull from repo on every load (public read, no auth needed)
 (async () => {
   const refreshed = await pullFromRepo();
-  if (refreshed) renderDashboard();
-  // If PAT is configured but data.json missing, push now to create it
-  else if (repoPat()) { await pushToRepo(data); }
+  if (refreshed) { renderDashboard(); renderHistory(); }
 })();
 </script>
 
