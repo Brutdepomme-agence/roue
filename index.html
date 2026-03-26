@@ -968,112 +968,93 @@ function loadData() {
 function saveDataLocal(d) { localStorage.setItem('shards-data', JSON.stringify(d)); }
 function saveData(d) {
   saveDataLocal(d);
-  pushToGist(d);
+  pushToRepo(d);
 }
 let data = loadData();
 
 // =========================================================
-// GIST SYNC
+// REPO SYNC  (data.json dans le même repo GitHub)
 // =========================================================
-const GIST_FILE = 'shards-stats.json';
-function gistCfg() {
-  return { pat: localStorage.getItem('shards-gist-pat')||'', id: localStorage.getItem('shards-gist-id')||'' };
-}
-function setSyncStatus(s, detail) {
+const REPO      = 'Brutdepomme-agence/roue';
+const DATA_PATH = 'data.json';
+const RAW_URL   = `https://raw.githubusercontent.com/${REPO}/main/${DATA_PATH}`;
+
+function repoPat() { return localStorage.getItem('shards-repo-pat') || ''; }
+
+function setSyncStatus(s) {
   const el = document.getElementById('sync-indicator');
   if (!el) return;
-  const map = { ok:'☁️', syncing:'🔄', error:'⚠️', off:'' };
-  el.textContent = map[s]||'';
-  const base = { ok:'Sync OK — cliquer pour forcer', syncing:'Synchronisation…', error:'Erreur sync (voir Joueurs)', off:'' }[s]||'';
-  el.title = detail ? `${base}\n${detail}` : base;
-  el.dataset.status = s;
-  if (s==='ok'||s==='error') el.style.cursor = 'pointer';
-  el.onclick = s==='ok'||s==='error' ? ()=>showPage('settings') : null;
+  el.textContent = { ok:'☁️', syncing:'🔄', error:'⚠️', off:'' }[s] || '';
+  el.title = { ok:'Sync OK', syncing:'Sync en cours…', error:'Erreur sync — voir Joueurs', off:'' }[s] || '';
+  el.style.cursor = (s==='ok'||s==='error') ? 'pointer' : 'default';
+  el.onclick = (s==='ok'||s==='error') ? ()=>showPage('settings') : null;
 }
-async function gistRequest(method, path, body) {
-  const {pat} = gistCfg();
-  const r = await fetch(`https://api.github.com${path}`, {
-    method, headers: {'Authorization':`token ${pat}`,'Content-Type':'application/json'},
-    body: body ? JSON.stringify(body) : undefined
-  });
-  if (!r.ok) {
-    const err = await r.json().catch(()=>({}));
-    const msg = err.message || `HTTP ${r.status}`;
-    const hint = r.status===401 ? ' — PAT invalide ou expiré'
-               : r.status===403 ? ' — scope "gist" manquant sur le PAT'
-               : r.status===404 ? ' — Gist introuvable (mauvais ID ?)'
-               : '';
-    throw new Error(msg + hint);
-  }
-  return r.json();
+
+async function pullFromRepo() {
+  try {
+    const r = await fetch(`${RAW_URL}?t=${Date.now()}`);
+    if (!r.ok) return false;
+    const remote = await r.json();
+    data = remote;
+    saveDataLocal(data);
+    setSyncStatus('ok');
+    return true;
+  } catch { return false; }
 }
-async function pushToGist(d) {
-  const {pat,id} = gistCfg();
-  if (!pat||!id) return;
+
+async function pushToRepo(d) {
+  const pat = repoPat();
+  if (!pat) return;
   setSyncStatus('syncing');
   try {
-    await gistRequest('PATCH',`/gists/${id}`,{files:{[GIST_FILE]:{content:JSON.stringify(d)}}});
+    // Get current SHA (needed for update)
+    let sha;
+    const check = await fetch(`https://api.github.com/repos/${REPO}/contents/${DATA_PATH}`,
+      { headers: { Authorization: `token ${pat}` } });
+    if (check.ok) sha = (await check.json()).sha;
+
+    // base64-encode (handles UTF-8)
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(d))));
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${DATA_PATH}`, {
+      method: 'PUT',
+      headers: { Authorization: `token ${pat}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Update stats', content, ...(sha ? {sha} : {}) })
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(()=>({}));
+      const hint = r.status===401 ? ' — PAT invalide ou expiré'
+                 : r.status===403 ? ' — scope "repo" ou "public_repo" requis'
+                 : r.status===404 ? ' — repo introuvable'
+                 : '';
+      throw new Error((err.message||`HTTP ${r.status}`) + hint);
+    }
     setSyncStatus('ok');
   } catch(e) { setSyncStatus('error'); toast('Sync ⚠️ : ' + e.message); }
 }
-async function testGistConnection() {
-  const {pat,id} = gistCfg();
-  if (!pat||!id) { toast('Aucune config Gist trouvée'); return; }
-  setSyncStatus('syncing');
-  try {
-    const gist = await gistRequest('GET',`/gists/${id}`);
-    const updated = new Date(gist.updated_at).toLocaleString('fr-FR');
-    setSyncStatus('ok');
-    toast(`✅ Connexion OK — Gist mis à jour le ${updated}`);
-  } catch(e) { setSyncStatus('error'); toast('❌ ' + e.message); }
-}
-async function pullFromGist() {
-  const {pat,id} = gistCfg();
-  if (!pat||!id) return false;
-  setSyncStatus('syncing');
-  try {
-    const gist = await gistRequest('GET',`/gists/${id}`);
-    const content = gist.files?.[GIST_FILE]?.content;
-    if (content) { data = JSON.parse(content); saveDataLocal(data); }
-    setSyncStatus('ok');
-    return !!content;
-  } catch(e) { setSyncStatus('error'); console.warn('Gist pull:', e.message); return false; }
-}
-async function createGist() {
-  const pat = document.getElementById('gist-pat-input')?.value.trim();
+
+async function connectRepo() {
+  const pat = document.getElementById('repo-pat-input')?.value.trim();
   if (!pat) { toast('PAT requis'); return; }
-  localStorage.setItem('shards-gist-pat', pat);
+  // Test: try to read repo info
   setSyncStatus('syncing');
   try {
-    const gist = await gistRequest('POST','/gists',{description:'Shards of Infinity — Stats',public:false,
-      files:{[GIST_FILE]:{content:JSON.stringify(data)}}});
-    localStorage.setItem('shards-gist-id', gist.id);
-    setSyncStatus('ok');
-    toast('Gist créé et sync activée ✓');
+    const r = await fetch(`https://api.github.com/repos/${REPO}`, { headers: { Authorization: `token ${pat}` } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}${r.status===401?' — PAT invalide':r.status===403?' — accès refusé':''}`);
+    localStorage.setItem('shards-repo-pat', pat);
+    await pushToRepo(data);
+    toast('Sync activée ✓ — données envoyées');
     renderSettings();
   } catch(e) { setSyncStatus('error'); toast('Erreur : ' + e.message); }
 }
-async function connectGist() {
-  const pat = document.getElementById('gist-pat-input')?.value.trim();
-  const id  = document.getElementById('gist-id-input')?.value.trim();
-  if (!pat||!id) { toast('PAT et Gist ID requis'); return; }
-  localStorage.setItem('shards-gist-pat', pat);
-  localStorage.setItem('shards-gist-id', id);
-  const ok = await pullFromGist();
-  if (ok) { toast('Connecté et données récupérées ✓'); renderDashboard(); }
-  else    { toast('Connecté (Gist vide, données locales conservées)'); }
-  renderSettings();
-}
 async function forcePull() {
-  const ok = await pullFromGist();
-  if (ok) { toast('Données récupérées du Gist ✓'); renderDashboard(); }
-  else    { toast('Rien à récupérer'); }
+  const ok = await pullFromRepo();
+  if (ok) { toast('Données récupérées ✓'); renderDashboard(); }
+  else toast('Rien à récupérer (data.json absent ?)');
 }
-async function forcePush() { await pushToGist(data); toast('Données envoyées vers le Gist ✓'); }
-function disconnectGist() {
-  if (!confirm('Déconnecter la sync Gist ? Les données locales sont conservées.')) return;
-  localStorage.removeItem('shards-gist-pat');
-  localStorage.removeItem('shards-gist-id');
+async function forcePush() { await pushToRepo(data); toast('Données envoyées ✓'); }
+function disconnectRepo() {
+  if (!confirm('Déconnecter la sync ? Les données locales sont conservées.')) return;
+  localStorage.removeItem('shards-repo-pat');
   setSyncStatus('off');
   renderSettings(); toast('Sync déconnectée.');
 }
@@ -1958,35 +1939,29 @@ function renderSettings() {
       <button class="remove-player" onclick="removePlayer(${i})" title="Retirer">✕</button>
     </div>`).join('');
 
-  const {pat,id} = gistCfg();
-  const connected = !!(pat && id);
+  const connected = !!repoPat();
   document.getElementById('gist-sync-card').innerHTML = connected ? `
-    <div class="form-section-title">☁️ Gist connecté</div>
-    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem;word-break:break-all">
-      ID : <code style="color:var(--accent2)">${id}</code>
-    </div>
-    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-      <button class="btn btn-primary" onclick="testGistConnection()">🔍 Tester</button>
-      <button class="btn btn-primary" onclick="forcePull()">↓ Récupérer</button>
-      <button class="btn btn-primary" onclick="forcePush()">↑ Envoyer</button>
-      <button class="btn" onclick="disconnectGist()" style="border-color:var(--loss);color:var(--loss)">Déconnecter</button>
-    </div>` : `
-    <div class="form-section-title">☁️ Configurer la sync GitHub Gist</div>
+    <div class="form-section-title">☁️ Sync activée</div>
     <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
-      Les données seront automatiquement partagées entre tous les appareils.<br>
-      Créez un PAT sur <strong>github.com → Settings → Developer settings → Personal access tokens</strong> avec le scope <code>gist</code>.
+      Les données sont automatiquement poussées sur GitHub à chaque sauvegarde.<br>
+      Les autres appareils récupèrent les données à chaque ouverture de l'app — sans configuration.
     </p>
-    <div class="field" style="margin-bottom:.8rem">
-      <label>GitHub Personal Access Token</label>
-      <input type="password" id="gist-pat-input" placeholder="ghp_…" autocomplete="off">
-    </div>
-    <div class="field" style="margin-bottom:1rem">
-      <label>Gist ID existant <span style="opacity:.5">(laisser vide pour en créer un nouveau)</span></label>
-      <input type="text" id="gist-id-input" placeholder="Optionnel">
-    </div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-      <button class="btn btn-primary" onclick="connectGist()">Connecter un Gist existant</button>
-      <button class="btn btn-primary" onclick="createGist()">Créer un nouveau Gist</button>
+      <button class="btn btn-primary" onclick="forcePull()">↓ Récupérer</button>
+      <button class="btn btn-primary" onclick="forcePush()">↑ Envoyer maintenant</button>
+      <button class="btn" onclick="disconnectRepo()" style="border-color:var(--loss);color:var(--loss)">Déconnecter</button>
+    </div>` : `
+    <div class="form-section-title">☁️ Sync GitHub</div>
+    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
+      Les données sont stockées dans le repo GitHub — accessibles en lecture sur tous les appareils sans config.<br>
+      Seule la personne qui saisit les résultats a besoin d'un PAT (scope <code>public_repo</code>).
+    </p>
+    <div class="field" style="margin-bottom:1rem">
+      <label>GitHub Personal Access Token (classic, scope : public_repo)</label>
+      <input type="password" id="repo-pat-input" placeholder="ghp_…" autocomplete="off">
+    </div>
+    <div style="display:flex;gap:.6rem">
+      <button class="btn btn-primary" onclick="connectRepo()">Activer la sync</button>
     </div>`;
 }
 function addPlayer() {
@@ -2016,12 +1991,10 @@ function toast(msg) {
 // INIT
 // =========================================================
 renderDashboard();
-// Auto-pull from Gist if configured
+// Auto-pull from repo on every load (public, no auth needed)
 (async () => {
-  if (gistCfg().pat && gistCfg().id) {
-    const refreshed = await pullFromGist();
-    if (refreshed) renderDashboard();
-  }
+  const refreshed = await pullFromRepo();
+  if (refreshed) renderDashboard();
 })();
 </script>
 
