@@ -987,34 +987,30 @@ function saveData(d) {
 let data = loadData();
 
 // =========================================================
-// REPO SYNC  (data.json dans le même repo GitHub)
+// FIREBASE SYNC  (Realtime Database — sans token requis)
 // =========================================================
-const REPO      = 'Brutdepomme-agence/roue';
-const DATA_PATH = 'data.json';
-const RAW_URL   = `https://raw.githubusercontent.com/${REPO}/main/${DATA_PATH}`;
-
-function repoPat() { return localStorage.getItem('shards-repo-pat') || ''; }
+const FB_URL = 'https://shards-stat-4eb7f-default-rtdb.europe-west1.firebasedatabase.app/data.json';
 
 function setSyncStatus(s) {
   const el = document.getElementById('sync-indicator');
   if (!el) return;
   el.textContent = { ok:'☁️', syncing:'🔄', error:'⚠️', off:'' }[s] || '';
-  el.title = { ok:'Sync OK', syncing:'Sync en cours…', error:'Erreur sync — voir Joueurs', off:'' }[s] || '';
+  el.title = { ok:'Sync OK', syncing:'Sync en cours…', error:'Erreur sync', off:'' }[s] || '';
   el.style.cursor = (s==='ok'||s==='error') ? 'pointer' : 'default';
   el.onclick = (s==='ok'||s==='error') ? ()=>showPage('settings') : null;
 }
 
 async function pullFromRepo(force = false) {
   try {
-    const r = await fetch(`${RAW_URL}?t=${Date.now()}`);
+    const r = await fetch(`${FB_URL}?t=${Date.now()}`);
     if (!r.ok) return false;
     const remote = await r.json();
-    if (!remote.games) return false;
+    if (!remote || !remote.games) return false;
     const localGames  = data.games?.length  || 0;
     const remoteGames = remote.games.length;
     // Seule protection : ne jamais écraser des données locales avec un remote vide
     if (!force && remoteGames === 0 && localGames > 0) return false;
-    if (remoteGames === 0 && localGames === 0) return false; // rien à faire
+    if (remoteGames === 0 && localGames === 0) return false;
     data = remote;
     saveDataLocal(data);
     setSyncStatus('ok');
@@ -1037,61 +1033,24 @@ function restoreBackup() {
 }
 
 async function pushToRepo(d) {
-  const pat = repoPat();
-  if (!pat) return;
   setSyncStatus('syncing');
   try {
-    // Get current SHA (needed for update)
-    let sha;
-    const check = await fetch(`https://api.github.com/repos/${REPO}/contents/${DATA_PATH}`,
-      { headers: { Authorization: `token ${pat}` } });
-    if (check.ok) sha = (await check.json()).sha;
-
-    // base64-encode (handles UTF-8)
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(d))));
-    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${DATA_PATH}`, {
+    const r = await fetch(FB_URL, {
       method: 'PUT',
-      headers: { Authorization: `token ${pat}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'Update stats', content, ...(sha ? {sha} : {}) })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(d)
     });
-    if (!r.ok) {
-      const err = await r.json().catch(()=>({}));
-      const hint = r.status===401 ? ' — PAT invalide ou expiré'
-                 : r.status===403 ? ' — scope "repo" ou "public_repo" requis'
-                 : r.status===404 ? ' — repo introuvable'
-                 : '';
-      throw new Error((err.message||`HTTP ${r.status}`) + hint);
-    }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     setSyncStatus('ok');
   } catch(e) { setSyncStatus('error'); toast('Sync ⚠️ : ' + e.message); }
 }
 
-async function connectRepo() {
-  const pat = document.getElementById('repo-pat-input')?.value.trim();
-  if (!pat) { toast('PAT requis'); return; }
-  // Test: try to read repo info
-  setSyncStatus('syncing');
-  try {
-    const r = await fetch(`https://api.github.com/repos/${REPO}`, { headers: { Authorization: `token ${pat}` } });
-    if (!r.ok) throw new Error(`HTTP ${r.status}${r.status===401?' — PAT invalide':r.status===403?' — accès refusé':''}`);
-    localStorage.setItem('shards-repo-pat', pat);
-    await pushToRepo(data);
-    toast('Sync activée ✓ — données envoyées');
-    renderSettings();
-  } catch(e) { setSyncStatus('error'); toast('Erreur : ' + e.message); }
-}
 async function forcePull() {
-  const ok = await pullFromRepo(true); // force=true bypasses guards
+  const ok = await pullFromRepo(true);
   if (ok) { toast('Données récupérées ✓'); renderDashboard(); renderHistory(); }
   else toast('Impossible de récupérer les données.');
 }
 async function forcePush() { await pushToRepo(data); toast('Données envoyées ✓'); }
-function disconnectRepo() {
-  if (!confirm('Déconnecter la sync ? Les données locales sont conservées.')) return;
-  localStorage.removeItem('shards-repo-pat');
-  setSyncStatus('off');
-  renderSettings(); toast('Sync déconnectée.');
-}
 
 // =========================================================
 // NAVIGATION
@@ -1973,30 +1932,16 @@ function renderSettings() {
       <button class="remove-player" onclick="removePlayer(${i})" title="Retirer">✕</button>
     </div>`).join('');
 
-  const connected = !!repoPat();
-  document.getElementById('gist-sync-card').innerHTML = connected ? `
-    <div class="form-section-title">☁️ Sync activée</div>
+  document.getElementById('gist-sync-card').innerHTML = `
+    <div class="form-section-title">☁️ Sync Firebase</div>
     <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
-      Les données sont automatiquement poussées sur GitHub à chaque sauvegarde.<br>
-      Les autres appareils récupèrent les données à chaque ouverture de l'app — sans configuration.
+      Les données sont synchronisées automatiquement sur Firebase à chaque sauvegarde.<br>
+      Tous les appareils voient les mises à jour — <strong>aucune configuration requise</strong>.
     </p>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="forcePull()">↓ Récupérer</button>
       <button class="btn btn-primary" onclick="forcePush()">↑ Envoyer maintenant</button>
-      <button class="btn" onclick="restoreBackup()" title="Restaurer la dernière sauvegarde locale automatique">♻️ Restaurer backup</button>
-      <button class="btn" onclick="disconnectRepo()" style="border-color:var(--loss);color:var(--loss)">Déconnecter</button>
-    </div>` : `
-    <div class="form-section-title">☁️ Sync GitHub</div>
-    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5">
-      Les données sont stockées dans le repo GitHub — accessibles en lecture sur tous les appareils sans config.<br>
-      Seule la personne qui saisit les résultats a besoin d'un PAT (scope <code>public_repo</code>).
-    </p>
-    <div class="field" style="margin-bottom:1rem">
-      <label>GitHub Personal Access Token (classic, scope : public_repo)</label>
-      <input type="password" id="repo-pat-input" placeholder="ghp_…" autocomplete="off">
-    </div>
-    <div style="display:flex;gap:.6rem">
-      <button class="btn btn-primary" onclick="connectRepo()">Activer la sync</button>
+      <button class="btn" onclick="restoreBackup()" title="Restaurer la dernière sauvegarde locale">♻️ Restaurer backup</button>
     </div>`;
 }
 function addPlayer() {
