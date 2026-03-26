@@ -1,1 +1,43 @@
-{"players":[{"name":"Gildas","color":"#7c5cfc"},{"name":"Jules","color":"#38bdf8"},{"name":"François","color":"#4ade80"},{"name":"Ben","color":"#fb923c"}],"games":[]}
+{
+  "players": [
+    { "name": "Gildas",   "color": "#7c5cfc" },
+    { "name": "Jules",    "color": "#38bdf8" },
+    { "name": "François", "color": "#4ade80" },
+    { "name": "Ben",      "color": "#fb923c" }
+  ],
+  "games": [
+    {
+      "id": "game-001",
+      "date": "2026-03-18",
+      "notes": "Première partie",
+      "results": [
+        { "player": "Gildas",   "hero": "Tetra",     "eliminations": 1,    "elimCristaux": 0,    "victoire": false, "typeVictoire": null,              "classement": 2.5, "pdcFin": 22, "nbCartes": 23, "nbBans": null, "mvp": false, "lvp": false },
+        { "player": "Jules",    "hero": "Volos",      "eliminations": 0,    "elimCristaux": 0,    "victoire": false, "typeVictoire": null,              "classement": 4,   "pdcFin": 17, "nbCartes": 17, "nbBans": null, "mvp": true,  "lvp": false },
+        { "player": "François", "hero": "Decima",     "eliminations": 0,    "elimCristaux": 1,    "victoire": true,  "typeVictoire": "cristallisation", "classement": 1,   "pdcFin": 30, "nbCartes": 12, "nbBans": null, "mvp": false, "lvp": true  },
+        { "player": "Ben",      "hero": "Ko Sing Wu", "eliminations": 0,    "elimCristaux": 0,    "victoire": false, "typeVictoire": null,              "classement": 2.5, "pdcFin": 11, "nbCartes": 20, "nbBans": null, "mvp": false, "lvp": false }
+      ]
+    },
+    {
+      "id": "game-002",
+      "date": "2026-03-25",
+      "notes": "",
+      "results": [
+        { "player": "François", "hero": null,         "eliminations": null, "elimCristaux": null, "victoire": true,  "typeVictoire": "elimination",     "classement": 1,   "pdcFin": null, "nbCartes": 28, "nbBans": null, "mvp": true,  "lvp": false },
+        { "player": "Ben",      "hero": "Ko Sing Wu", "eliminations": 2,    "elimCristaux": null, "victoire": false, "typeVictoire": null,              "classement": 2,   "pdcFin": 20, "nbCartes": 10, "nbBans": null, "mvp": false, "lvp": false },
+        { "player": "Gildas",   "hero": null,         "eliminations": null, "elimCristaux": null, "victoire": false, "typeVictoire": null,              "classement": 3,   "pdcFin": null, "nbCartes": null, "nbBans": null, "mvp": false, "lvp": false },
+        { "player": "Jules",    "hero": null,         "eliminations": 0,    "elimCristaux": null, "victoire": false, "typeVictoire": null,              "classement": 4,   "pdcFin": 12, "nbCartes": 16, "nbBans": null, "mvp": false, "lvp": true  }
+      ]
+    },
+    {
+      "id": "game-003",
+      "date": "2026-03-25",
+      "notes": "",
+      "results": [
+        { "player": "Ben",      "hero": null,         "eliminations": 0,    "elimCristaux": 1,    "victoire": true,  "typeVictoire": "cristallisation", "classement": 1,   "pdcFin": 30, "nbCartes": 37, "nbBans": null, "mvp": true,  "lvp": false },
+        { "player": "Gildas",   "hero": null,         "eliminations": 0,    "elimCristaux": null, "victoire": false, "typeVictoire": null,              "classement": 2,   "pdcFin": 20, "nbCartes": 16, "nbBans": null, "mvp": false, "lvp": false },
+        { "player": "Jules",    "hero": null,         "eliminations": 0,    "elimCristaux": null, "victoire": false, "typeVictoire": null,              "classement": 3,   "pdcFin": 8,  "nbCartes": 30, "nbBans": null, "mvp": false, "lvp": false },
+        { "player": "François", "hero": null,         "eliminations": null, "elimCristaux": null, "victoire": false, "typeVictoire": null,              "classement": 4,   "pdcFin": 10, "nbCartes": 20, "nbBans": null, "mvp": false, "lvp": false }
+      ]
+    }
+  ]
+}

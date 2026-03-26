@@ -965,7 +965,20 @@ function loadData() {
   try { const r = localStorage.getItem('shards-data'); return r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_DATA)); }
   catch { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
 }
-function saveDataLocal(d) { localStorage.setItem('shards-data', JSON.stringify(d)); }
+function saveDataLocal(d) {
+  // Always keep a timestamped backup before overwriting
+  const prev = localStorage.getItem('shards-data');
+  if (prev) {
+    try {
+      const prevObj = JSON.parse(prev);
+      if ((prevObj.games?.length || 0) > 0) {
+        localStorage.setItem('shards-data-backup', prev);
+        localStorage.setItem('shards-data-backup-ts', new Date().toISOString());
+      }
+    } catch {}
+  }
+  localStorage.setItem('shards-data', JSON.stringify(d));
+}
 function saveData(d) {
   saveDataLocal(d);
   pushToRepo(d);
@@ -1001,10 +1014,24 @@ async function pullFromRepo() {
     if (remoteGames === 0 && localGames > 0) return false;
     if (remoteGames < localGames) return false;
     data = remote;
-    saveDataLocal(data);
+    saveDataLocal(data);  // saveDataLocal also saves a backup of the previous state
     setSyncStatus('ok');
     return true;
   } catch { return false; }
+}
+
+function restoreBackup() {
+  const backup = localStorage.getItem('shards-data-backup');
+  const ts     = localStorage.getItem('shards-data-backup-ts');
+  if (!backup) { toast('Aucune sauvegarde disponible.'); return; }
+  const label = ts ? new Date(ts).toLocaleString('fr-FR') : '?';
+  if (!confirm(`Restaurer la sauvegarde du ${label} ?\nCela remplacera les données actuelles.`)) return;
+  try {
+    data = JSON.parse(backup);
+    localStorage.setItem('shards-data', backup);
+    toast('Sauvegarde restaurée !');
+    renderHistory(); renderDashboard();
+  } catch { toast('Erreur lors de la restauration.'); }
 }
 
 async function pushToRepo(d) {
@@ -1954,6 +1981,7 @@ function renderSettings() {
     <div style="display:flex;gap:.6rem;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="forcePull()">↓ Récupérer</button>
       <button class="btn btn-primary" onclick="forcePush()">↑ Envoyer maintenant</button>
+      <button class="btn" onclick="restoreBackup()" title="Restaurer la dernière sauvegarde locale automatique">♻️ Restaurer backup</button>
       <button class="btn" onclick="disconnectRepo()" style="border-color:var(--loss);color:var(--loss)">Déconnecter</button>
     </div>` : `
     <div class="form-section-title">☁️ Sync GitHub</div>
