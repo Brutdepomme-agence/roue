@@ -795,6 +795,7 @@
       <button onclick="showPage('settings')">Joueurs</button>
     </nav>
     <span id="sync-indicator" title="" style="font-size:.95rem;cursor:default;opacity:.75;padding:.2rem"></span>
+    <button onclick="forcePull()" title="Récupérer les dernières données" style="background:transparent;border:1px solid rgba(124,92,252,.3);color:var(--accent2);border-radius:6px;padding:.25rem .55rem;font-size:.75rem;cursor:pointer;font-family:inherit;font-weight:600;letter-spacing:.05em" id="sync-pull-btn">↓ Sync</button>
     <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()" title="Mode clair / sombre">☀️</button>
   </div>
 </header>
@@ -1011,12 +1012,9 @@ async function pullFromRepo(force = false) {
     if (!remote.games) return false;
     const localGames  = data.games?.length  || 0;
     const remoteGames = remote.games.length;
-    // Safety guards (bypassed when force=true, e.g. manual "Récupérer")
-    if (!force) {
-      if (remoteGames === 0 && localGames > 0) return false;
-      if (remoteGames < localGames) return false;
-    }
-    if (remoteGames === 0 && localGames === 0) return false; // nothing to do
+    // Seule protection : ne jamais écraser des données locales avec un remote vide
+    if (!force && remoteGames === 0 && localGames > 0) return false;
+    if (remoteGames === 0 && localGames === 0) return false; // rien à faire
     data = remote;
     saveDataLocal(data);
     setSyncStatus('ok');
