@@ -765,6 +765,31 @@
   [data-theme="light"] .logo-shards { background: linear-gradient(135deg, #1a0a04 0%, #8b1818 55%, #cc2020 100%); -webkit-background-clip: text; background-clip: text; }
   [data-theme="light"] .logo-inf { background: linear-gradient(135deg, #2a1080, #5a28e0, #7040d0); -webkit-background-clip: text; background-clip: text; }
 
+  /* ── Chart layout ── */
+  .chart-card-wide { grid-column: span 2; }
+  .chart-wrap-tall { height: 280px; position: relative; }
+
+  /* ── Count-up pop ── */
+  @keyframes numPop { 0%{transform:scale(.6) translateY(10px);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1) translateY(0);opacity:1} }
+  .s-val-anim { display:inline-block; animation: numPop .6s cubic-bezier(.34,1.56,.64,1) both; }
+
+  /* ── Podium ── */
+  .podium-wrap { display:flex; align-items:flex-end; justify-content:center; gap:1.5rem; padding:1.5rem 0 0; margin-bottom:.5rem; }
+  .podium-item { display:flex; flex-direction:column; align-items:center; gap:.35rem; }
+  .podium-avatar-ring { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:800; border:3px solid; background:var(--surface2); overflow:hidden; }
+  .podium-avatar-ring img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+  .podium-name { font-size:.8rem; font-weight:700; letter-spacing:.04em; }
+  .podium-score { font-size:.7rem; color:var(--text-muted); }
+  .podium-block { border-radius:10px 10px 0 0; font-weight:800; font-size:1.4rem; text-align:center; min-width:84px; display:flex; align-items:center; justify-content:center; }
+  .podium-1 .podium-avatar-ring { width:64px; height:64px; font-size:1.5rem; box-shadow:0 0 18px rgba(245,158,11,.45); }
+  .podium-1 .podium-block { background:rgba(245,158,11,.15); border:2px solid rgba(245,158,11,.45); height:96px; }
+  .podium-2 .podium-block { background:rgba(148,163,184,.08); border:2px solid rgba(148,163,184,.35); height:68px; }
+  .podium-3 .podium-block { background:rgba(180,83,9,.08); border:2px solid rgba(180,83,9,.3); height:48px; }
+
+  /* ── Fade-in sections ── */
+  .fade-sect { opacity:0; transform:translateY(18px); transition:opacity .55s ease, transform .55s ease; }
+  .fade-sect.visible { opacity:1; transform:translateY(0); }
+
   /* ── Stats table ── */
   .stats-table { width:100%; border-collapse:collapse; font-size:.82rem; }
   .stats-table th {
@@ -1205,8 +1230,9 @@ function mkChart(id, type, labels, datasets, opts={}) {
     type, data: { labels, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: opts.legend ?? false, labels: { color: '#a0a0c0', font: { size: 11 } } } },
-      scales: type !== 'pie' && type !== 'doughnut' ? {
+      animation: { duration: 900, easing: 'easeInOutQuart' },
+      plugins: { legend: { display: opts.legend ?? false, labels: { color: '#a0a0c0', font: { size: 11, family: 'Rajdhani' } } } },
+      scales: type !== 'pie' && type !== 'doughnut' && type !== 'radar' && type !== 'polarArea' ? {
         x: { ticks: { color: '#7878a0' }, grid: { color: 'rgba(42,42,80,.35)' } },
         y: { ticks: { color: '#7878a0' }, grid: { color: 'rgba(42,42,80,.35)' }, beginAtZero: true, ...opts.y }
       } : {},
@@ -1215,7 +1241,31 @@ function mkChart(id, type, labels, datasets, opts={}) {
   });
 }
 
-function alpha(c, a) { return c + Math.round(a*255).toString(16).padStart(2,'0'); }
+function alpha(hex, a) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function countUp(elId, target, duration=750) {
+  const el = document.getElementById(elId);
+  if (!el || isNaN(target)) return;
+  const start = performance.now();
+  const tick = now => {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(ease * target);
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function initFadeObserver() {
+  if (!('IntersectionObserver' in window)) { document.querySelectorAll('.fade-sect').forEach(e=>e.classList.add('visible')); return; }
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.06 });
+  document.querySelectorAll('.fade-sect').forEach(el => obs.observe(el));
+}
 
 function renderDashboard() {
   const stats = aggStats();
@@ -1243,24 +1293,64 @@ function renderDashboard() {
   const bestPlayer = players.slice().filter(p => stats[p.name]?.games)
     .sort((a,b) => (stats[b.name]?.wins||0) - (stats[a.name]?.wins||0))[0];
 
+  const totalElim = data.games.reduce((a,g)=>a+g.results.reduce((b,r)=>b+(r.eliminations||0),0),0);
+  const cristWins  = data.games.reduce((a,g)=>a+g.results.filter(r=>r.typeVictoire==='cristallisation').length,0);
+  const elimWins   = data.games.reduce((a,g)=>a+g.results.filter(r=>r.typeVictoire==='elimination').length,0);
+  const mvpKing = players.slice().filter(p=>stats[p.name]?.games)
+    .sort((a,b)=>(stats[b.name]?.mvp||0)-(stats[a.name]?.mvp||0))[0];
+
   document.getElementById('summary-tiles').innerHTML = `
     <div class="summary-tile">
-      <div class="s-val">${totalGames}</div>
+      <div class="s-val s-val-anim" id="count-games">0</div>
       <div class="s-label">Parties jouées</div>
     </div>
     <div class="summary-tile">
-      <div class="s-val" style="color:${bestHero ? heroData(bestHero.name).color : 'var(--accent2)'}">
+      <div class="s-val s-val-anim" style="color:${bestHero ? heroData(bestHero.name).color : 'var(--accent2)'}">
         ${bestHero ? bestHero.name : '—'}
       </div>
-      <div class="s-label">Meilleur héros${bestHeroRate != null ? ` · ${bestHeroRate}% win` : ''}</div>
+      <div class="s-label">Meilleur héros${bestHeroRate != null ? \` · ${bestHeroRate}% win\` : ''}</div>
     </div>
     <div class="summary-tile">
-      <div class="s-val" style="color:${bestPlayer?.color||'#fff'}">
+      <div class="s-val s-val-anim" style="color:${bestPlayer?.color||'#fff'}">
         ${bestPlayer?.name||'—'}
       </div>
-      <div class="s-label">Meilleur joueur${bestPlayer ? ` · ${stats[bestPlayer.name].wins} 🏆` : ''}</div>
+      <div class="s-label">Meilleur joueur${bestPlayer ? \` · ${stats[bestPlayer.name].wins} 🏆\` : ''}</div>
     </div>
-  `;
+    <div class="summary-tile">
+      <div class="s-val s-val-anim" id="count-elim">0</div>
+      <div class="s-label">Éliminations totales ⚔️</div>
+    </div>
+    <div class="summary-tile">
+      <div class="s-val s-val-anim"><span style="color:var(--accent2)">💎 ${cristWins}</span> <span style="opacity:.4;font-size:.7em">/</span> <span style="color:var(--loss)">⚔️ ${elimWins}</span></div>
+      <div class="s-label">Cristallisations · Éliminations</div>
+    </div>
+    ${mvpKing ? \`<div class="summary-tile">
+      <div class="s-val s-val-anim" style="color:var(--gold)">${mvpKing.name}</div>
+      <div class="s-label">⭐ MVP king · ${stats[mvpKing.name].mvp} fois</div>
+    </div>\` : ''}
+  \`;
+  setTimeout(()=>{ countUp('count-games', totalGames); countUp('count-elim', totalElim); }, 40);
+
+  // Podium (top 3)
+  if (ranked.length >= 2) {
+    const podOrd = [ranked[1], ranked[0], ranked[2]].filter(Boolean);
+    const podCls = ['podium-2','podium-1','podium-3'];
+    const podMedals = ['🥈','🥇','🥉'];
+    document.getElementById('podium-wrap').innerHTML = '<div class="podium-wrap">' + podOrd.map((p,vi) => {
+      const s = stats[p.name]||{};
+      const avgR = s.games ? (s.totalRank/s.games).toFixed(1) : '—';
+      const photo = PLAYER_PHOTOS[p.name];
+      const inner = photo ? `<img src="${photo}" alt="${p.name}">` : p.name.charAt(0);
+      return `<div class="podium-item ${podCls[vi]}">
+        <div class="podium-avatar-ring" style="border-color:${p.color}">${inner}</div>
+        <div class="podium-name" style="color:${p.color}">${p.name}</div>
+        <div class="podium-score">moy. #${avgR} · ${s.wins||0}🏆</div>
+        <div class="podium-block">${podMedals[vi]}</div>
+      </div>`;
+    }).join('') + '</div>';
+  } else {
+    document.getElementById('podium-wrap').innerHTML = '';
+  }
 
   // Leaderboard (sorted by avg rank, lower = better)
   const lbRanks = ['🥇','🥈','🥉','4️⃣'];
@@ -1323,7 +1413,7 @@ function renderDashboard() {
     </div>`;
   }).join('');
 
-  // Hero cards + charts on dashboard
+  // ── Hero cards ───────────────────────────────────────────────────────────
   document.getElementById('hero-cards-dash').innerHTML = heroCardsHTML();
   const hStats2 = aggHeroStats();
   const sortedHeroes = HEROES.slice().sort((a,b) => {
@@ -1331,55 +1421,126 @@ function renderDashboard() {
     const wb = hStats2[b.name]?.games ? hStats2[b.name].wins/hStats2[b.name].games : -1;
     return wb - wa;
   });
-  const hNames = sortedHeroes.map(h => h.name);
-  const hColors = sortedHeroes.map(h => h.color);
+  const heroesWithData = sortedHeroes.filter(h => hStats2[h.name]?.games > 0);
+  const hNames   = heroesWithData.map(h => h.name);
+  const hColors  = heroesWithData.map(h => h.color);
   const nH = data.players.length || 4;
-  mkChart('chart-hero-winrate', 'bar', hNames, [{
-    data: sortedHeroes.map(h => hStats2[h.name]?.games ? Math.round(hStats2[h.name].wins/hStats2[h.name].games*100) : 0),
-    backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
-  }], { y: { max: 100 } });
-  mkChart('chart-hero-rank', 'bar', hNames, [{
-    data: sortedHeroes.map(h => hStats2[h.name]?.games ? parseFloat((nH + 1 - hStats2[h.name].totalRank/hStats2[h.name].games).toFixed(2)) : 0),
-    backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
-  }], { y: { max: nH + 0.5 }, extra: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Classement moy. : #${(nH + 1 - ctx.parsed.y).toFixed(1)}` } } } } });
 
-  // Charts
-  const names = ranked.map(p => p.name);
-  const colors = ranked.map(p => p.color);
+  // PolarArea — hero winrate
+  if (charts['chart-hero-winrate']) charts['chart-hero-winrate'].destroy();
+  const hwCtx = document.getElementById('chart-hero-winrate')?.getContext('2d');
+  if (hwCtx) charts['chart-hero-winrate'] = new Chart(hwCtx, {
+    type: 'polarArea',
+    data: { labels: hNames, datasets:[{ data: heroesWithData.map(h=>Math.round(hStats2[h.name].wins/hStats2[h.name].games*100)),
+      backgroundColor: hColors.map(c=>alpha(c,.55)), borderColor: hColors, borderWidth:2 }] },
+    options: { responsive:true, maintainAspectRatio:false, animation:{ duration:1000, easing:'easeInOutQuart' },
+      scales:{ r:{ ticks:{display:false}, grid:{color:'rgba(124,92,252,.15)'}, max:100 } },
+      plugins:{ legend:{ display:true, position:'right', labels:{color:'#a0a0c0', font:{size:11,family:'Rajdhani'}, usePointStyle:true } } } }
+  });
+
+  // Horizontal bar — hero rank score
+  mkChart('chart-hero-rank', 'bar', hNames, [{
+    data: heroesWithData.map(h => parseFloat((nH + 1 - hStats2[h.name].totalRank/hStats2[h.name].games).toFixed(2))),
+    backgroundColor: hColors.map(c => alpha(c,.65)), borderColor: hColors, borderWidth: 2, borderRadius: 7
+  }], { extra: { indexAxis:'y', plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>`Classement moy. : #${(nH+1-ctx.parsed.x).toFixed(1)}` } } },
+    scales:{ x:{ max:nH+.5, ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'}, beginAtZero:true },
+             y:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'} } } } });
+
+  // ── Player charts ─────────────────────────────────────────────────────────
+  const names    = ranked.map(p => p.name);
+  const colors   = ranked.map(p => p.color);
+  const allP     = [...ranked, ...noGamePlayers];
   const nPlayers = data.players.length || 4;
 
+  // Radar — player comparison (all stats normalized 0-100)
+  const radarLabels = ['Victoires %', 'Classement', 'Concentration', 'MVP %', 'Éliminations'];
+  const radarDatasets = allP.map(p => {
+    const s = stats[p.name] || {};
+    const g = s.games || 1;
+    return {
+      label: p.name,
+      data: [
+        s.games ? s.wins/s.games*100 : 0,
+        s.rankGames ? Math.max(0,(nPlayers+1-s.totalRank/s.rankGames)/nPlayers*100) : 0,
+        s.pdcGames  ? Math.min(s.totalPdc/s.pdcGames/30*100, 100) : 0,
+        s.games     ? s.mvp/s.games*100 : 0,
+        s.elimGames ? Math.min(s.totalElim/s.elimGames/3*100,100) : 0
+      ].map(v=>parseFloat(v.toFixed(1))),
+      backgroundColor: alpha(p.color,.13), borderColor: p.color, borderWidth:2,
+      pointBackgroundColor: p.color, pointBorderColor:'#fff', pointRadius:4, fill:true
+    };
+  });
+  if (charts['chart-radar']) charts['chart-radar'].destroy();
+  const rcCtx = document.getElementById('chart-radar')?.getContext('2d');
+  if (rcCtx) charts['chart-radar'] = new Chart(rcCtx, {
+    type:'radar', data:{ labels:radarLabels, datasets:radarDatasets },
+    options:{ responsive:true, maintainAspectRatio:false, animation:{ duration:1000, easing:'easeInOutQuart' },
+      scales:{ r:{ min:0, max:100, ticks:{display:false,stepSize:25}, grid:{color:'rgba(124,92,252,.15)'},
+        angleLines:{color:'rgba(124,92,252,.2)'}, pointLabels:{color:'#a0a0c0',font:{size:11,family:'Rajdhani'}} } },
+      plugins:{ legend:{ display:true, labels:{ color:'#a0a0c0', usePointStyle:true, pointStyleWidth:8, font:{size:11} } } } }
+  });
+
+  // Horizontal bar — victories
   mkChart('chart-wins', 'bar', names, [{
     data: names.map(n => stats[n]?.wins||0),
-    backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
-  }]);
+    backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth:2, borderRadius:7
+  }], { extra:{ indexAxis:'y', plugins:{legend:{display:false}},
+    scales:{ x:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'}, beginAtZero:true },
+             y:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'} } } } });
 
-  // Classement : inverted so rank 1 = tallest bar (nPlayers + 1 - avgRank)
-  mkChart('chart-rank', 'bar', names, [{
-    data: names.map(n => stats[n]?.rankGames ? parseFloat((nPlayers + 1 - stats[n].totalRank/stats[n].rankGames).toFixed(2)) : 0),
-    backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
-  }], { y: { max: nPlayers + 0.5 }, extra: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Classement moy. : #${(nPlayers + 1 - ctx.parsed.y).toFixed(1)}` } } } } });
+  // Stacked bar — win types per player
+  mkChart('chart-victype', 'bar', allP.map(p=>p.name), [
+    { label:'💎 Cristallisation', data:allP.map(p=>stats[p.name]?.cristallisation||0), backgroundColor:'rgba(124,92,252,.75)', borderColor:'#7c5cfc', borderWidth:2, borderRadius:{topLeft:5,topRight:5} },
+    { label:'⚔️ Élimination',     data:allP.map(p=>stats[p.name]?.elimination||0),    backgroundColor:'rgba(248,113,113,.75)', borderColor:'#f87171', borderWidth:2, borderRadius:{topLeft:5,topRight:5} }
+  ], { extra:{ plugins:{ legend:{display:true,labels:{color:'#a0a0c0',font:{size:11}}}, tooltip:{mode:'index'} },
+    scales:{ x:{stacked:true,ticks:{color:'#7878a0'},grid:{color:'rgba(42,42,80,.35)'}},
+             y:{stacked:true,beginAtZero:true,ticks:{color:'#7878a0',stepSize:1},grid:{color:'rgba(42,42,80,.35)'}} } } });
 
-  mkChart('chart-pdc', 'bar', names, [{
-    data: names.map(n => stats[n]?.pdcGames ? parseFloat((stats[n].totalPdc/stats[n].pdcGames).toFixed(1)) : 0),
-    backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
-  }]);
-
+  // Horizontal bar — elim average
   mkChart('chart-elim', 'bar', names, [{
-    data: names.map(n => stats[n]?.elimGames ? parseFloat((stats[n].totalElim / stats[n].elimGames).toFixed(2)) : 0),
-    backgroundColor: colors.map(c => alpha(c,.65)), borderColor: colors, borderWidth: 2, borderRadius: 7
-  }], { extra: { plugins: { tooltip: { callbacks: { label: ctx => `Élim. moy. : ${ctx.parsed.y}` } } } } });
+    data: names.map(n => stats[n]?.elimGames ? parseFloat((stats[n].totalElim/stats[n].elimGames).toFixed(2)) : 0),
+    backgroundColor: colors.map(c=>alpha(c,.65)), borderColor:colors, borderWidth:2, borderRadius:7
+  }], { extra:{ indexAxis:'y', plugins:{legend:{display:false}},
+    scales:{ x:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'}, beginAtZero:true },
+             y:{ ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'} } } } });
 
-  // Victory types doughnut
-  const cristTotal = data.games.reduce((a,g) => a+g.results.filter(r=>r.typeVictoire==='cristallisation').length, 0);
-  const elimTotal  = data.games.reduce((a,g) => a+g.results.filter(r=>r.typeVictoire==='elimination').length, 0);
-  const noType     = data.games.reduce((a,g) => a+g.results.filter(r=>r.victoire&&!r.typeVictoire).length, 0);
-  mkChart('chart-victype', 'doughnut',
-    ['Cristallisation 💎', 'Élimination ⚔️', noType ? 'Non renseigné' : null].filter(Boolean),
-    [{ data: [cristTotal, elimTotal, noType || null].filter(x=>x!=null),
-       backgroundColor: ['rgba(124,92,252,.7)','rgba(248,113,113,.7)','rgba(120,120,160,.5)'],
-       borderColor: ['#7c5cfc','#f87171','#7878a0'], borderWidth: 2 }],
-    { legend: true }
-  );
+  // Line — rank evolution per game
+  const gamesSorted = [...data.games].sort((a,b)=>a.date.localeCompare(b.date));
+  const gameLabels  = gamesSorted.map((g,i)=>`P${i+1}${g.notes?' – '+g.notes.slice(0,18):''}`);
+  if (charts['chart-rank-evo']) charts['chart-rank-evo'].destroy();
+  const reCtx = document.getElementById('chart-rank-evo')?.getContext('2d');
+  if (reCtx) charts['chart-rank-evo'] = new Chart(reCtx, {
+    type:'line',
+    data:{ labels:gameLabels, datasets: allP.map(p=>({
+      label:p.name,
+      data: gamesSorted.map(g=>{ const r=g.results.find(r2=>r2.player===p.name); return r?.classement??null; }),
+      borderColor:p.color, backgroundColor:alpha(p.color,.08), tension:.4, borderWidth:2.5,
+      pointBackgroundColor:p.color, pointBorderColor:'#fff', pointRadius:5, pointHoverRadius:7, fill:false, spanGaps:false
+    })) },
+    options:{ responsive:true, maintainAspectRatio:false, animation:{duration:1000,easing:'easeInOutQuart'},
+      plugins:{ legend:{ display:true, labels:{color:'#a0a0c0',usePointStyle:true,font:{size:11}} } },
+      scales:{ x:{ticks:{color:'#7878a0'},grid:{color:'rgba(42,42,80,.35)'}},
+               y:{reverse:true, min:1, ticks:{color:'#7878a0',stepSize:1}, grid:{color:'rgba(42,42,80,.35)'},
+                  title:{display:true,text:'Classement (1 = meilleur)',color:'#7878a0'}} } }
+  });
+
+  // Line — concentration evolution per game
+  if (charts['chart-pdc-evo']) charts['chart-pdc-evo'].destroy();
+  const peCtx = document.getElementById('chart-pdc-evo')?.getContext('2d');
+  if (peCtx) charts['chart-pdc-evo'] = new Chart(peCtx, {
+    type:'line',
+    data:{ labels:gameLabels, datasets: allP.map(p=>({
+      label:p.name,
+      data: gamesSorted.map(g=>{ const r=g.results.find(r2=>r2.player===p.name); return r?.pdcFin??null; }),
+      borderColor:p.color, backgroundColor:alpha(p.color,.08), tension:.4, borderWidth:2.5,
+      pointBackgroundColor:p.color, pointBorderColor:'#fff', pointRadius:5, pointHoverRadius:7, fill:false, spanGaps:false
+    })) },
+    options:{ responsive:true, maintainAspectRatio:false, animation:{duration:1000,easing:'easeInOutQuart'},
+      plugins:{ legend:{ display:true, labels:{color:'#a0a0c0',usePointStyle:true,font:{size:11}} } },
+      scales:{ x:{ticks:{color:'#7878a0'},grid:{color:'rgba(42,42,80,.35)'}},
+               y:{min:0,max:30, ticks:{color:'#7878a0'}, grid:{color:'rgba(42,42,80,.35)'},
+                  title:{display:true,text:'Concentration de fin',color:'#7878a0'}} } }
+  });
 
   // Statistiques table
   const allPlayers = [...ranked, ...noGamePlayers];
@@ -1411,10 +1572,11 @@ function renderDashboard() {
           const avgElimC  = s.elimCGames  ? (s.totalElimC/s.elimCGames).toFixed(1)   : '—';
           const avgCartes = s.cartesGames ? (s.totalCartes/s.cartesGames).toFixed(1) : '—';
           const avgBans   = s.bansGames   ? (s.totalBans/s.bansGames).toFixed(1)     : '—';
+          const wrBar = `<div style="display:flex;align-items:center;gap:.4rem"><span style="min-width:2.2rem">${s.wins||0}</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${wr}%;height:100%;background:${p.color};border-radius:3px;transition:width .8s ease"></div></div><span class="stats-muted">${wr}%</span></div>`;
           return `<tr>
             <td><span class="stats-table-player" style="color:${p.color}">${p.name}</span></td>
             <td>${g}</td>
-            <td>${s.wins||0} <span class="stats-muted">(${wr}%)</span></td>
+            <td>${wrBar}</td>
             <td>${avgRank}</td>
             <td>${avgPdc}</td>
             <td>${avgElim}</td>
@@ -2115,6 +2277,7 @@ function toast(msg) {
 // INIT
 // =========================================================
 renderDashboard();
+initFadeObserver();
 // Auto-pull from repo on every load (public read, no auth needed)
 (async () => {
   const refreshed = await pullFromRepo();
