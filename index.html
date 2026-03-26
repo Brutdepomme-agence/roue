@@ -1014,7 +1014,18 @@ async function pushToGist(d) {
   try {
     await gistRequest('PATCH',`/gists/${id}`,{files:{[GIST_FILE]:{content:JSON.stringify(d)}}});
     setSyncStatus('ok');
-  } catch(e) { setSyncStatus('error'); console.warn('Gist push:', e.message); }
+  } catch(e) { setSyncStatus('error'); toast('Sync ⚠️ : ' + e.message); }
+}
+async function testGistConnection() {
+  const {pat,id} = gistCfg();
+  if (!pat||!id) { toast('Aucune config Gist trouvée'); return; }
+  setSyncStatus('syncing');
+  try {
+    const gist = await gistRequest('GET',`/gists/${id}`);
+    const updated = new Date(gist.updated_at).toLocaleString('fr-FR');
+    setSyncStatus('ok');
+    toast(`✅ Connexion OK — Gist mis à jour le ${updated}`);
+  } catch(e) { setSyncStatus('error'); toast('❌ ' + e.message); }
 }
 async function pullFromGist() {
   const {pat,id} = gistCfg();
@@ -1955,6 +1966,7 @@ function renderSettings() {
       ID : <code style="color:var(--accent2)">${id}</code>
     </div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="testGistConnection()">🔍 Tester</button>
       <button class="btn btn-primary" onclick="forcePull()">↓ Récupérer</button>
       <button class="btn btn-primary" onclick="forcePush()">↑ Envoyer</button>
       <button class="btn" onclick="disconnectGist()" style="border-color:var(--loss);color:var(--loss)">Déconnecter</button>
