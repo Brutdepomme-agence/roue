@@ -979,65 +979,68 @@ const GIST_FILE = 'shards-stats.json';
 function gistCfg() {
   return { pat: localStorage.getItem('shards-gist-pat')||'', id: localStorage.getItem('shards-gist-id')||'' };
 }
-function setSyncStatus(s) {
+function setSyncStatus(s, detail) {
   const el = document.getElementById('sync-indicator');
   if (!el) return;
   const map = { ok:'☁️', syncing:'🔄', error:'⚠️', off:'' };
   el.textContent = map[s]||'';
-  el.title = { ok:'Sync OK', syncing:'Synchronisation…', error:'Erreur de sync', off:'' }[s]||'';
+  const base = { ok:'Sync OK — cliquer pour forcer', syncing:'Synchronisation…', error:'Erreur sync (voir Joueurs)', off:'' }[s]||'';
+  el.title = detail ? `${base}\n${detail}` : base;
   el.dataset.status = s;
+  if (s==='ok'||s==='error') el.style.cursor = 'pointer';
+  el.onclick = s==='ok'||s==='error' ? ()=>showPage('settings') : null;
+}
+async function gistRequest(method, path, body) {
+  const {pat} = gistCfg();
+  const r = await fetch(`https://api.github.com${path}`, {
+    method, headers: {'Authorization':`token ${pat}`,'Content-Type':'application/json'},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(()=>({}));
+    const msg = err.message || `HTTP ${r.status}`;
+    const hint = r.status===401 ? ' — PAT invalide ou expiré'
+               : r.status===403 ? ' — scope "gist" manquant sur le PAT'
+               : r.status===404 ? ' — Gist introuvable (mauvais ID ?)'
+               : '';
+    throw new Error(msg + hint);
+  }
+  return r.json();
 }
 async function pushToGist(d) {
   const {pat,id} = gistCfg();
   if (!pat||!id) return;
   setSyncStatus('syncing');
   try {
-    const r = await fetch(`https://api.github.com/gists/${id}`, {
-      method:'PATCH',
-      headers:{'Authorization':`token ${pat}`,'Content-Type':'application/json'},
-      body: JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(d)}}})
-    });
-    setSyncStatus(r.ok ? 'ok' : 'error');
-  } catch { setSyncStatus('error'); }
+    await gistRequest('PATCH',`/gists/${id}`,{files:{[GIST_FILE]:{content:JSON.stringify(d)}}});
+    setSyncStatus('ok');
+  } catch(e) { setSyncStatus('error'); console.warn('Gist push:', e.message); }
 }
 async function pullFromGist() {
   const {pat,id} = gistCfg();
   if (!pat||!id) return false;
   setSyncStatus('syncing');
   try {
-    const r = await fetch(`https://api.github.com/gists/${id}`,{headers:{'Authorization':`token ${pat}`}});
-    if (!r.ok) { setSyncStatus('error'); return false; }
-    const gist = await r.json();
+    const gist = await gistRequest('GET',`/gists/${id}`);
     const content = gist.files?.[GIST_FILE]?.content;
-    if (content) {
-      data = JSON.parse(content);
-      saveDataLocal(data);
-      setSyncStatus('ok');
-      return true;
-    }
-    setSyncStatus('ok'); return false;
-  } catch { setSyncStatus('error'); return false; }
+    if (content) { data = JSON.parse(content); saveDataLocal(data); }
+    setSyncStatus('ok');
+    return !!content;
+  } catch(e) { setSyncStatus('error'); console.warn('Gist pull:', e.message); return false; }
 }
 async function createGist() {
   const pat = document.getElementById('gist-pat-input')?.value.trim();
   if (!pat) { toast('PAT requis'); return; }
+  localStorage.setItem('shards-gist-pat', pat);
   setSyncStatus('syncing');
   try {
-    const r = await fetch('https://api.github.com/gists',{
-      method:'POST',
-      headers:{'Authorization':`token ${pat}`,'Content-Type':'application/json'},
-      body: JSON.stringify({description:'Shards of Infinity — Stats',public:false,
-        files:{[GIST_FILE]:{content:JSON.stringify(data)}}})
-    });
-    if (!r.ok) throw new Error();
-    const gist = await r.json();
-    localStorage.setItem('shards-gist-pat', pat);
+    const gist = await gistRequest('POST','/gists',{description:'Shards of Infinity — Stats',public:false,
+      files:{[GIST_FILE]:{content:JSON.stringify(data)}}});
     localStorage.setItem('shards-gist-id', gist.id);
-    document.getElementById('gist-id-input').value = gist.id;
     setSyncStatus('ok');
     toast('Gist créé et sync activée ✓');
     renderSettings();
-  } catch { setSyncStatus('error'); toast('Erreur — vérifie le PAT (scope "gist" requis)'); }
+  } catch(e) { setSyncStatus('error'); toast('Erreur : ' + e.message); }
 }
 async function connectGist() {
   const pat = document.getElementById('gist-pat-input')?.value.trim();
