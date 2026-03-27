@@ -499,23 +499,23 @@
   .drum-fade-top { top: 0;    background: linear-gradient(to bottom, rgba(14,4,4,.98) 0%, rgba(14,4,4,.6) 60%, transparent); }
   .drum-fade-bot { bottom: 0; background: linear-gradient(to top,   rgba(14,4,4,.98) 0%, rgba(14,4,4,.6) 60%, transparent); }
 
-  /* Rolling strip */
-  .drum-track { position: absolute; inset: 0; overflow: hidden; }
-  #drum-strip {
-    position: absolute; top: 0; left: 0; right: 0;
-    display: flex; flex-direction: column;
+  /* 3D Cylinder drum */
+  .drum-track { position: absolute; inset: 0; overflow: hidden; perspective: 560px; }
+  #drum-cylinder {
+    position: absolute; top: 50%; left: 0; right: 0; height: 0;
+    transform-style: preserve-3d;
+    transform: rotateX(0deg);
     will-change: transform;
-    transform: translateY(0);
   }
   .drum-slot {
-    height: 80px; flex-shrink: 0;
+    position: absolute; left: 0; right: 0; height: 80px; top: -40px;
     display: flex; align-items: center; gap: 1.2rem;
     padding: 0 2rem;
-    transition: opacity .15s;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-origin: center center;
   }
-  .drum-slot.ds-side { opacity: .28; }
-  .drum-slot.ds-center { opacity: 1; background: rgba(196,27,27,.04); }
-  .drum-slot.ds-hidden { opacity: 0; pointer-events:none; }
+  .drum-slot.ds-center { background: rgba(196,27,27,.04); }
 
   .ds-avatar {
     width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
@@ -974,7 +974,7 @@
           <div class="drum-sel-line drum-sel-top"></div>
           <div class="drum-sel-line drum-sel-bot"></div>
           <div class="drum-track">
-            <div id="drum-strip"></div>
+            <div id="drum-cylinder"></div>
           </div>
         </div>
         <!-- Win overlay (inside machine) -->
@@ -1948,7 +1948,7 @@ function hexToRgb(hex) {
 function renderWheel() {
   const players = data.players;
   if (!players.length) return;
-  _buildDrumStrip(0, false);
+  _buildDrumCylinder(0, false);
   const ov = document.getElementById('drum-win-overlay');
   if (ov) ov.classList.remove('active');
   const btn = document.getElementById('btn-drum-spin');
@@ -1956,66 +1956,48 @@ function renderWheel() {
   reshuffleHeroes();
 }
 
-// Build one slot's HTML
-function _drumSlotHtml(p, role, spinning) {
-  // role: 'center' | 'side' | 'hidden'
-  if (!p) return `<div class="drum-slot ds-hidden"></div>`;
-  const photo = PLAYER_PHOTOS[p.name];
-  const isCenter = role === 'center';
-  const avCls  = isCenter ? 'ds-avatar ds-av-center' : 'ds-avatar';
-  const nmCls  = isCenter ? 'ds-name ds-nm-center' : 'ds-name ds-nm-side';
-  const slotCls = role === 'hidden' ? 'drum-slot ds-hidden'
-                : isCenter           ? 'drum-slot ds-center'
-                                     : 'drum-slot ds-side';
-  const avGlow = isCenter && !spinning ? `box-shadow:0 0 28px ${p.color},0 0 55px ${p.color}44` : '';
-  const nmGlow = isCenter && !spinning ? `text-shadow:0 0 28px ${p.color}` : '';
-  const avHtml = photo
-    ? `<img src="${photo}" alt="${p.name}">`
-    : `<div class="ds-init" style="background:${p.color}22;color:${p.color}">${p.name[0]}</div>`;
-  return `<div class="${slotCls}">
-    <div class="${avCls}" style="border-color:${p.color};${avGlow}">${avHtml}</div>
-    <div class="${nmCls}" style="color:${p.color};${nmGlow}">${p.name}</div>
-  </div>`;
+// ── 3D Cylinder drum ──────────────────────────────────────────────────────
+const CYL_SEG = 28;   // degrees between slots on the cylinder
+const CYL_R   = 148;  // cylinder radius in px  (≈ 80 / (28°×π/180))
+
+function _buildDrumCylinder(centerIdx, spinning) {
+  const players = data.players; const n = players.length; if (!n) return;
+  const cyl = document.getElementById('drum-cylinder'); if (!cyl) return;
+  let html = '';
+  for (let i = -2; i <= 2; i++) {
+    const p = players[((centerIdx + i) % n + n) % n];
+    const angle = i * CYL_SEG;
+    const rad   = angle * Math.PI / 180;
+    const cosA  = Math.cos(rad);
+    const isCenter = i === 0;
+    const opacity  = isCenter ? 1 : Math.max(0, Math.pow(cosA, 1.4)).toFixed(3);
+    const avSz     = Math.round(isCenter ? 68 : 44 + 24 * cosA);
+    const nmSz     = isCenter ? '2.2rem' : (Math.max(1.0, 1.8 * cosA)).toFixed(2) + 'rem';
+    const photo    = PLAYER_PHOTOS[p.name];
+    const avHtml   = photo
+      ? `<img src="${photo}" alt="${p.name}">`
+      : `<div class="ds-init" style="background:${p.color}22;color:${p.color};font-size:${Math.round(avSz*0.38)}px">${p.name[0]}</div>`;
+    const avGlow   = isCenter && !spinning ? `box-shadow:0 0 28px ${p.color},0 0 55px ${p.color}44` : '';
+    const nmGlow   = isCenter && !spinning ? `text-shadow:0 0 28px ${p.color}` : '';
+    const t        = `rotateX(${angle}deg) translateZ(${CYL_R}px)`;
+    html += `<div class="drum-slot${isCenter?' ds-center':''}" style="transform:${t};opacity:${opacity}">
+      <div class="ds-avatar" style="width:${avSz}px;height:${avSz}px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${p.color};${avGlow}">${avHtml}</div>
+      <div class="ds-name" style="color:${p.color};font-weight:800;letter-spacing:.18em;font-size:${nmSz};${nmGlow}">${p.name}</div>
+    </div>`;
+  }
+  cyl.innerHTML = html;
+  cyl.style.transition = 'none';
+  cyl.style.transform  = 'rotateX(0deg)';
 }
 
-// Rebuild the strip (4 slots: hidden-above, prev, center, next) at translateY(0)
-// Slot layout: [0]=hidden(above), [1]=prev, [2]=center, [3]=next — strip 320px tall
-// translateY(0) → shows slots 0,1,2 in the 240px drum; slot 3 hidden below
-// translateY(-80px) → shows slots 1,2,3 — used during animation
-function _buildDrumStrip(idx, spinning) {
-  const players = data.players; const n = players.length;
-  const pp   = players[((idx-2)%n+n)%n]; // 2 before — hidden slot
-  const prev = players[((idx-1)%n+n)%n];
-  const curr = players[idx % n];
-  const next = players[(idx+1) % n];
-  const strip = document.getElementById('drum-strip');
-  if (!strip) return;
-  strip.innerHTML =
-    _drumSlotHtml(pp,   'hidden',  spinning) +
-    _drumSlotHtml(prev, 'side',    spinning) +
-    _drumSlotHtml(curr, 'center',  spinning) +
-    _drumSlotHtml(next, 'side',    spinning);
-}
-
-function updateDrumBands(idx, stepDuration, spinning) {
-  const strip = document.getElementById('drum-strip');
-  if (!strip) return;
-
-  const dur = Math.max(Math.round(stepDuration * 0.80), 18);
+function updateDrumCylinder(idx, stepDuration, spinning) {
+  const cyl = document.getElementById('drum-cylinder'); if (!cyl) return;
+  const dur  = Math.max(Math.round(stepDuration * 0.85), 20);
   const ease = spinning ? 'linear' : 'cubic-bezier(0.22,0.61,0.36,1)';
-
-  // Animate: strip rolls UP by one slot (80px)
-  // Currently at translateY(0): shows [hidden, prev, center, next] → top 3 visible
-  // Animate to translateY(-80px): shows [prev, center, next] and the hidden slot is now at top
-  strip.style.transition = `transform ${dur}ms ${ease}`;
-  strip.style.transform  = 'translateY(-80px)';
-
-  // After animation: snap back and rebuild for new idx
-  setTimeout(() => {
-    strip.style.transition = 'none';
-    strip.style.transform  = 'translateY(0)';
-    _buildDrumStrip(idx + 1, spinning);
-  }, dur + 6);
+  // Roll one step: rotate cylinder by -CYL_SEG to bring the slot below up to center
+  cyl.style.transition = `transform ${dur}ms ${ease}`;
+  cyl.style.transform  = `rotateX(-${CYL_SEG}deg)`;
+  setTimeout(() => { _buildDrumCylinder(idx + 1, spinning); }, dur + 8);
 }
 
 function spinDrum() {
@@ -2041,8 +2023,8 @@ function spinDrum() {
   const steps = sched.length;
   const startIdx = ((winner - steps) % n + n * 40) % n;
 
-  // Init strip at startIdx - 1 so first updateDrumBands(startIdx-1) → shows startIdx
-  _buildDrumStrip(startIdx - 1, true);
+  // Init cylinder at startIdx - 1 so first updateDrumCylinder shows startIdx
+  _buildDrumCylinder(startIdx - 1, true);
 
   let step = 0;
   function tick() {
@@ -2051,23 +2033,24 @@ function spinDrum() {
     const isSpinning = step < (8 + 6 + 4); // blur during fast phase
 
     if (step === steps) {
-      // Final: smooth settle on winner
-      _buildDrumStrip(winner - 1, false);
-      const strip = document.getElementById('drum-strip');
-      if (strip) {
-        strip.style.transition = 'transform 600ms cubic-bezier(0.16,1,0.3,1)';
-        strip.style.transform  = 'translateY(-80px)';
+      // Final: smooth cylinder roll onto winner
+      _buildDrumCylinder(winner - 1, false);
+      const cyl = document.getElementById('drum-cylinder');
+      if (cyl) {
         setTimeout(() => {
-          if (strip) { strip.style.transition = 'none'; strip.style.transform = 'translateY(0)'; }
-          _buildDrumStrip(winner, false);
-          _drumSpinning = false;
-          setTimeout(() => showWinner(winner), 280);
-        }, 620);
+          cyl.style.transition = `transform 620ms cubic-bezier(0.16,1,0.3,1)`;
+          cyl.style.transform  = `rotateX(-${CYL_SEG}deg)`;
+          setTimeout(() => {
+            _buildDrumCylinder(winner, false);
+            _drumSpinning = false;
+            setTimeout(() => showWinner(winner), 280);
+          }, 640);
+        }, 30);
       }
       return;
     }
 
-    updateDrumBands(idx, dur, isSpinning);
+    updateDrumCylinder(idx, dur, isSpinning);
     step++;
     setTimeout(tick, dur);
   }
